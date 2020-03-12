@@ -42,8 +42,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] get Text: %s\n", num, payload);
 
         if (strcmp((char *)payload, "RESET") == 0)  ESP.reset();
-        else if (strcmp((char *)payload, "on") == 0)   impulsIzmerenieEnable = 1;
-        else if (strcmp((char *)payload, "off") == 0)  impulsIzmerenieEnable = 0;
+        else if (strcmp((char *)payload, "on") == 0)   sensor1Enable = 1;
+        else if (strcmp((char *)payload, "off") == 0)  sensor1Enable = 0;
         else {
           DynamicJsonDocument doc(1024);
           DeserializationError error = deserializeJson(doc, payload);
@@ -52,7 +52,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           }
 
           if (doc["page"].as<String>() == "index") {
-            impulsIzmerenieEnable = doc["impulsIzmerenieEnable"];      //Serial.println(impulsIzmerenieEnable);
+            relayEnable = doc["relayEnable"];      //Serial.println(relayEnable);
+            sensor1Enable = doc["sensor1Enable"];      //Serial.println(sensor1Enable);
+            sensor2Enable = doc["sensor2Enable"];      //Serial.println(sensor2Enable);
             //saveConfiguration();
           }
           else if (doc["page"].as<String>() == "setup") {
@@ -104,8 +106,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
-  doc["impulsIzmerenieEnable"] = impulsIzmerenieEnable;
-  doc["impulsFreq"] = impulsFreq;
+  doc["relayEnable"] = relayEnable;
+  doc["sensor1Enable"] = sensor1Enable;
+  doc["sensor2Enable"] = sensor2Enable;
   String output = "";
   serializeJson(doc, output);
   return output;

@@ -8,7 +8,7 @@ bool loadConfiguration()
     return 0;
   }
 
-  DynamicJsonDocument doc(1024); 
+  DynamicJsonDocument doc(1024);
 
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
@@ -17,6 +17,9 @@ bool loadConfiguration()
   }
 
   // Copy values from the JsonDocument to the value config
+  sensor1Enable = doc["sensor1Enable"];    //Serial.println(sensor1Enable);
+  sensor2Enable = doc["sensor2Enable"];    //Serial.println(sensor1Enable);
+  
   wifiAP_mode = doc["wifiAP_mode"];    //Serial.println(wifiAP_mode);
 
   String stemp = doc["p_ssid"].as<String>();
@@ -72,6 +75,8 @@ void saveConfiguration()
   }
 
   DynamicJsonDocument doc(1024);
+  doc["sensor1Enable"] = sensor1Enable;
+  doc["sensor2Enable"] = sensor2Enable;
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["p_ssidAP"] = p_ssidAP;
   doc["p_passwordAP"] = p_passwordAP;
