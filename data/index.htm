@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<title>Главная</title>
+	<link rel='stylesheet' href='style.css'>	
+	<style type="text/css">
+		input[type=number],button {width:3em; font-size:18px;}
+		#myCanvas {background-color:#fff; border:0px solid #ccc;}
+		h1 {font-size:4em;}
+		table {width: 100%;}
+		#stolb1 {width: 155px;}	
+		#tr1 {vertical-align: top;}	
+		#tr3 {vertical-align: bottom;}	
+		#tr2 {text-align: center;}
+		.colortextred {color:red; font-size:24px;}
+		.colortextgray {color:gray; font-size:24px;}
+	</style>
+</head>
+
+<body>
+<h3 class='top' id='top'>Главная</h3>
+<div class='menu' id='menu'>
+	<a href='index.htm'>Главная</a>
+	<a href='setup.htm'>Системные настройки</a>
+	<a href='edit.htm'>Файлы</a>
+</div>
+
+
+<div class='content' id='content'>
+	<table>
+		<tr id='tr1'>
+			<td rowspan="3" id='stolb1'>
+				<canvas id="myCanvas" width="150" height="500"></canvas>
+			</td>
+			<td>
+				<input type='number' onchange="predelMaxSet()" id='predelMax' name='predelMax' value='2000'>
+				<p><button onclick="predMaxMinus()">-100</button>
+				<button onclick="predMaxPlus()">+100</button></p>
+
+			</td>
+		</tr>
+		<tr id='tr2'>
+			<td>
+				<h1 id='hz'>0</h1>
+				<button id='butOnCV' class="colortextred" onclick="onCV()">ЦВ</button>
+				<button id='butOnTG' class="colortextgray" onclick="onTG()">ТГ</button>
+			</td>
+		</tr>
+		<tr id='tr3'> 
+			<td>
+				<button onclick="predMinMinus()">-100</button>
+				<button onclick="predMinPlus()">+100</button>
+				<p><input type='number' onchange="predelMinSet()" id='predelMin' name='predelMin' value='0'></p>
+			</td>
+		</tr>
+	</table>
+</div>
+
+
+<script>
+	let canvasAutoHeight = document.documentElement.clientHeight - document.getElementById("top").offsetHeight - document.getElementById("menu").offsetHeight - 3*10 - 3*5 - 20;
+	document.getElementById("myCanvas").height = canvasAutoHeight;
+
+	let data = {
+		page: "index",
+		freq: 0,
+		impulsIzmerenieEnable: 0  //0-off, 1-CV, 2-TG
+	};
+
+	let canvas = document.getElementById("myCanvas");
+	let width = canvas.width;
+	let height = canvas.height;
+	let widhtBar = 70;
+	let heightBar = height-10-10-5;
+	let bigLine = 20;
+	let litleLine = 10;
+	let shiftLine = 2;
+	let predelMax = 1*document.getElementById("predelMax").value;
+	let predelMin = 1*document.getElementById("predelMin").value;
+	let predelDelta = predelMax-predelMin;
+	let context = canvas.getContext("2d");
+
+	
+	function drawStart() {
+		context.clearRect( 0, 0, width, height );
+		context.lineWidth = 1;
+		context.strokeStyle = "green";
+		context.strokeRect( 10, height-10, widhtBar, -heightBar );
+
+		context.beginPath();
+		context.lineWidth = 1;
+		context.strokeStyle = "red";
+		context.font = "16px serif";
+		let i=0;
+		let iText=predelMin;
+		while (i <= heightBar){
+			context.moveTo(10+widhtBar+shiftLine, height-10-i);
+			context.lineTo(10+widhtBar+shiftLine+bigLine, height-10-i);
+			context.fillText(iText, 10+widhtBar+shiftLine+25, height-10-i+4);
+			i = i + heightBar/10;
+			iText = 1*iText + (predelMax-predelMin)/10;
+			iText = iText.toFixed(0);
+		}
+		context.stroke();
+
+		context.lineWidth = 0.5;
+		i=0;
+		while (i <= heightBar){
+			context.moveTo(10+widhtBar+shiftLine, height-10-i);
+			context.lineTo(10+widhtBar+shiftLine+litleLine, height-10-i);
+			i = i + heightBar/50;
+		}
+		context.stroke();
+	}
+
+
+	function drawFrame() {
+		context.clearRect( 10, height-10, widhtBar, -heightBar );
+		context.fillStyle = "green";
+		context.fillRect( 10, height-10+heightBar*(predelMin/predelDelta), widhtBar, -heightBar*(data["freq"]/predelDelta) );
+	}
+
+
+	function updateAllPage() {
+		//document.getElementById("hz").innerHTML = data["freq"].toFixed(0);
+		document.getElementById("hz").innerHTML = Math.floor(data["freq"]);
+		if ( data["impulsIzmerenieEnable"] == 0 ) {
+			document.getElementById("butOnCV").className = "colortextgray";
+			document.getElementById("butOnTG").className = "colortextgray";
+		} else if (data["impulsIzmerenieEnable"] == 1) {
+			document.getElementById("butOnCV").className = "colortextred";
+			document.getElementById("butOnTG").className = "colortextgray";
+		} else if (data["impulsIzmerenieEnable"] == 2) {
+			document.getElementById("butOnCV").className = "colortextgray";
+			document.getElementById("butOnTG").className = "colortextred";
+		}
+	};
+
+	function sendData () {
+		console.log('TO Server: ', JSON.stringify( data ));
+		if (connection) connection.send(JSON.stringify( data ));
+	};
+
+
+	drawFrame();
+	drawStart();
+	updateAllPage();
+	let connection = new WebSocket('ws://' + location.host + ':81/index.htm', ['arduino']);
+	
+	connection.onopen = function () {
+		//connection.send('ping');		
+	};
+
+	connection.onerror = function (error) {
+		console.log('WebSocket Error ', error);
+		alert("Ошибка " + error.message);
+	};
+
+	connection.onmessage = function (e) {
+		console.log('FROM Server: ', e.data);
+		let obj = JSON.parse(e.data);
+		for (x in obj) {
+			if ( data[x]  != null ) {
+				data[x] = obj[x];
+				data["freq"] = data["freq"]*5/10/2;
+				updateAllPage();
+				drawFrame();
+			}
+		}
+	};
+
+
+	function onCV() {
+		if (document.getElementById("butOnCV").className == "colortextred")  data["impulsIzmerenieEnable"] = 0;
+		else data["impulsIzmerenieEnable"] = 1;
+		updateAllPage();
+		sendData();
+	};
+
+	function onTG() {
+		if (document.getElementById("butOnTG").className == "colortextred")  data["impulsIzmerenieEnable"] = 0;
+		else  data["impulsIzmerenieEnable"] = 2;
+		updateAllPage();
+		sendData();
+	};
+
+
+	function predelMaxSet() {
+		predelMax = 1*document.getElementById("predelMax").value;
+		predelDelta = predelMax-predelMin;
+		drawStart();
+		drawFrame();
+	};
+	function predelMinSet() {
+		predelMin = 1*document.getElementById("predelMin").value;
+		predelDelta = predelMax-predelMin;
+		drawStart();
+		drawFrame();
+	};
+
+	function predMaxPlus() {
+		let max = 1*document.getElementById("predelMax").value;
+		document.getElementById("predelMax").value = max + 100;
+		predelMaxSet();
+	};
+	function predMaxMinus() {
+		let max = 1*document.getElementById("predelMax").value;
+		let min = 1*document.getElementById("predelMin").value;
+		if (max-100 > min) {
+			document.getElementById("predelMax").value = max - 100;
+			predelMaxSet();
+		}
+	};
+
+	function predMinPlus() {
+		let max = 1*document.getElementById("predelMax").value;
+		let min = 1*document.getElementById("predelMin").value;
+		if (min+100 < max) {
+			document.getElementById("predelMin").value = min + 100;
+			predelMinSet();
+		}
+	};
+	function predMinMinus() {
+		let min = 1*document.getElementById("predelMin").value;
+		if (min-100 > 0) {
+			document.getElementById("predelMin").value = min - 100;
+			predelMinSet();
+		}
+	};
+
+</script>
+</body>
+</html>
