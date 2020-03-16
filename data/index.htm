@@ -6,17 +6,157 @@
 	<title>Главная</title>
 	<link rel='stylesheet' href='style.css'>	
 	<style type="text/css">
-		input[type=number],button {width:3em; font-size:18px;}
+
 		#myCanvas {background-color:#fff; border:0px solid #ccc;}
 		h1 {font-size:4em;}
 		table {width: 100%;}
 		#stolb1 {width: 155px;}	
-		#tr1 {vertical-align: top;}	
-		#tr3 {vertical-align: bottom;}	
-		#tr2 {text-align: center;}
+		#tr1 {vertical-align:top;}	
+		#tr3 {vertical-align:bottom;}	
+		#tr2 {text-align:center;}
 		.colortextred {color:red; font-size:24px;}
 		.colortextgray {color:gray; font-size:24px;}
-	</style>
+
+		.column {flex:50%;}
+    	.row {display: flex;}
+
+		/* Customize the label (the container) */
+		.container {
+		  display: block;
+		  position: relative;
+		  padding-left: 35px;
+		  padding-top: 4px;
+		  margin-bottom: 12px;
+		  cursor: pointer;
+		  font-size: 18px;
+		  -webkit-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+		}
+
+		/* Hide the browser's default radio button */
+		.container input {
+		  position: absolute;
+		  opacity: 0;
+		}
+
+		/* Create a custom radio button */
+		.checkmark {
+		  position: absolute;
+		  top: 0;
+		  left: 0;
+		  height: 25px;
+		  width: 25px;
+		  background-color: white;
+		  border-radius: 50%;
+		}
+
+		/* On mouse-over, add a grey background color */
+		.container:hover input ~ .checkmark {
+		  background-color: #ccc;
+		}
+
+		/* When the radio button is checked, add a blue background */
+		.container input:checked ~ .checkmark {
+		  background-color: #2196F3;
+		}
+
+		/* Create the indicator (the dot/circle - hidden when not checked) */
+		.checkmark:after {
+		  content: "";
+		  position: absolute;
+		  display: none;
+		}
+
+		/* Show the indicator (dot/circle) when checked */
+		.container input:checked ~ .checkmark:after {
+		  display: block;
+		}
+
+		/* Style the indicator (dot/circle) */
+		.container .checkmark:after {
+		  top: 9px;
+		  left: 9px;
+		  width: 8px;
+		  height: 8px;
+		  border-radius: 50%;
+		  background: white;
+		}
+
+
+.switch {
+  position: relative;
+  display: block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {display:none;}
+
+.textdiv {
+	padding-left: 75px;
+	padding-top: 5px;
+	font-size: 20px;
+	width: 200px;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+
+input[type=number] {
+  margin: 0 0 4px 8px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size:18px;
+  width:3em;
+}
+
+</style>
 </head>
 
 <body>
@@ -27,8 +167,50 @@
 	<a href='edit.htm'>Файлы</a>
 </div>
 
+<div class='content'>
+	<h3>Состояние</h3>
+</div>
+<div class='content'>
+<div class='row'>
+	<div class="column">
+		<h3>Режим работы</h3>
+		<label class="container">АВТО
+		  <input type="radio" checked="checked" name="radio">
+		  <span class="checkmark"></span>
+		</label>
+		<label class="container">ВКЛ
+		  <input type="radio" name="radio">
+		  <span class="checkmark"></span>
+		</label>
+		<label class="container">ОТКЛ
+		  <input type="radio" name="radio">
+		  <span class="checkmark"></span>
+		</label>
+	</div>
+  	<div class="column">
+  		<h3>Задействовать датчики</h3>
+		<label class="switch"><div class='textdiv'>Датчик 1</div>
+		  <input type="checkbox">
+		  <span class="slider round"></span>
+		</label>
+		<br>
+		<label class="switch"><div class='textdiv'>Датчик 2</div>
+		  <input type="checkbox" checked>
+		  <span class="slider round"></span>
+		</label>
+  	</div>
+</div>
+<hr>
+	<div>
+		<label for="cvv">Задержка отключения, сек </label>
+		<input type="number" id="cvv" name="cvv" value="500">
+	</div>
+</div>
+<div class='content'>
+	<h3>Статистика</h3>
+</div>
 
-<div class='content' id='content'>
+<div class='content'>
 	<table>
 		<tr id='tr1'>
 			<td rowspan="3" id='stolb1'>
@@ -57,7 +239,6 @@
 		</tr>
 	</table>
 </div>
-
 
 <script>
 	let canvasAutoHeight = document.documentElement.clientHeight - document.getElementById("top").offsetHeight - document.getElementById("menu").offsetHeight - 3*10 - 3*5 - 20;
