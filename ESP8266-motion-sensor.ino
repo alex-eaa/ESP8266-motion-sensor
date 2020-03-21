@@ -43,12 +43,17 @@ bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
 unsigned int speedT = 200;  //период отправки данных, миллисек
 
-//bool relayMode = 1;       //режим работы, 0-ручной, 1-авто
-bool relayEnable = 0;     //состояние реле 1-вкл, 0-откл
-bool relayEnablePrev = 0;
-bool sensor1Enable = 1;   //активация сенсора №1. 1-on, 0-off
-bool sensor1EnablePrev = 0;
-bool sensor2Enable = 0;   //активация сенсора №2. 1-on, 0-off
+int relayMode = 2;        //режим работы, 0-откл, 1-вкл, 2-авто
+bool relayState = 0;      //состояние реле 0-off, 1-on
+bool relayStatePrev = 0;
+bool sensor1State = 0;    //состояние сенсора №1: 0-off, 1-on
+bool sensor1StatePrev = 0;
+bool sensor2State = 0;    //состояние сенсора №2: 0-off, 1-on
+bool sensor2StatePrev = 0;
+bool sensor1Use = 1;      //использование сенсора №1. 0-off, 1-on
+bool sensor1UsePrev = 0;
+bool sensor2Use = 0;      //использование сенсора №2. 0-off, 1-on
+bool sensor2UsePrev = 0;
 
 
 WebSocketsServer webSocket(81);
@@ -97,8 +102,8 @@ void setup() {
   webServer_init();      //инициализация HTTP интерфейса
   webSocket_init();      //инициализация webSocket интерфейса
 
-  sensor1Enable = 1;
-  sensor2Enable = 0;
+  sensor1Use = 1;
+  sensor2Use = 0;
 }
 
 
@@ -107,15 +112,15 @@ void loop() {
   webSocket.loop();
   server.handleClient();
 
-  if (sensor1Enable == 1 && sensor2Enable == 0) {
-    relayEnable = digitalRead(SENSOR1);
-  } else if (sensor1Enable == 0 && sensor2Enable == 1) {
-    relayEnable = digitalRead(SENSOR2);
-  } else if (sensor1Enable == 1 && sensor2Enable == 1) {
-    relayEnable = digitalRead(SENSOR1) && digitalRead(SENSOR2);
+  if (sensor1Use == 1 && sensor2Use == 0) {
+    relayState = digitalRead(SENSOR1);
+  } else if (sensor1Use == 0 && sensor2Use == 1) {
+    relayState = digitalRead(SENSOR2);
+  } else if (sensor1Use == 1 && sensor2Use == 1) {
+    relayState = digitalRead(SENSOR1) && digitalRead(SENSOR2);
   }
 
-  if (relayEnable == 1) {
+  if (relayState == 1) {
     digitalWrite(RELAY, HIGH);
     digitalWrite(LED_GREEN, HIGH);
     digitalWrite(LED_WIFI, 0);
@@ -125,18 +130,18 @@ void loop() {
     digitalWrite(LED_WIFI, 1);
   }
 
-  if (relayEnablePrev != relayEnable ) {
-    Serial.print("relayEnable = ");
-    Serial.println(relayEnable);
+  if (relayStatePrev != relayState ) {
+    Serial.print("relayState = ");
+    Serial.println(relayState);
   }
 
   //Serial.println(impulsFreq);
   //Отправка Speed данных клиентам каждые speedT миллисекунд, при условии что данныее обновились и клиенты подключены
   if (true) {
     if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
-      if (relayEnablePrev != relayEnable ) {
-        String data = "{\"relayEnable\":";
-        data += relayEnable;
+      if (relayStatePrev != relayState ) {
+        String data = "{\"relayState\":";
+        data += relayState;
         data += "}";
         int startT_broadcastTXT = micros();
         webSocket.broadcastTXT(data);
@@ -145,7 +150,7 @@ void loop() {
       }
     }
   }
-  relayEnablePrev = relayEnable;
+  relayStatePrev = relayState;
 }
 
 

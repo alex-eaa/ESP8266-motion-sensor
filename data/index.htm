@@ -79,9 +79,9 @@
 		line-height: 40px;
 		}
 		.option-input:checked::after {
-		-webkit-animation: click-wave 0.65s;
-		-moz-animation: click-wave 0.65s;
-		animation: click-wave 0.65s;
+		-webkit-animation: click-wave 0.4s;
+		-moz-animation: click-wave 0.4s;
+		animation: click-wave 0.4s;
 		background: #1486ba;
 		content: '';
 		display: block;
@@ -105,11 +105,10 @@
     --checkmark:#2ecc71;
     --cross:#F44336;
     --btn:#1486ba;
-    
     --time:1s;
 }
 
-#btn {
+#btn1, #btn2 {
     width:60px;
     height:60px;
     border-radius:100%;
@@ -118,18 +117,18 @@
     justify-content:center;
     align-items:center;
     cursor:pointer;
-    box-shadow:0 2px 5px rgba(0,0,0,.5);
+    1box-shadow:0 2px 5px rgba(0,0,0,.5);
 }
 
-#icon {
+.sensors {
     font-size:0;
     transform:rotate(225deg);
     transition:margin var(--time) ease;
     margin-top:8px;
-  filter:drop-shadow(-2px -2px 2px rgba(0,0,0,.8));
+  	1filter:drop-shadow(-2px -2px 2px rgba(0,0,0,.8));
 }
 
-#icon:before {
+.sensors:before {
     content:'';
     display:inline-block;
     width:46.6px;
@@ -142,7 +141,7 @@
     border-radius:3px;
 }
 
-#icon:after {
+.sensors:after {
     content:'';
     display:inline-block;
     width:5px;
@@ -155,12 +154,12 @@
     border-radius:3px;
 }
 
-#icon.checked {
+.sensors.checked {
     margin-right:15px;
     margin-top:30px;
 }
 
-#icon.checked:before {
+.sensors.checked:before {
     content:'';
     display:inline-block;
     background:var(--checkmark);
@@ -170,7 +169,7 @@
     margin:0;
 }
 
-#icon.checked:after {
+.sensors.checked:after {
     content:'';
     display:inline-block;
     background:var(--checkmark);
@@ -182,80 +181,7 @@
 
 
 
-#btn2 {
-    width:60px;
-    height:60px;
-    border-radius:100%;
-    background:var(--btn);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    cursor:pointer;
-    box-shadow:0 2px 5px rgba(0,0,0,.5);
-}
-
-#icon2 {
-    font-size:0;
-    transform:rotate(225deg);
-    transition:margin var(--time) ease;
-    margin-top:8px;
-  filter:drop-shadow(-2px -2px 2px rgba(0,0,0,.8));
-}
-
-#icon2:before {
-    content:'';
-    display:inline-block;
-    width:46.6px;
-    height:5px;
-    background:var(--cross);
-    transition:all var(--time) ease;
-    position:absolute;
-    margin-left:-20px;
-    transform:rotate(180deg);
-    border-radius:3px;
-}
-
-#icon2:after {
-    content:'';
-    display:inline-block;
-    width:5px;
-    height:46.6px;
-    background:var(--cross);
-    transition:all var(--time) ease;
-    position:absolute;
-    margin-top:-20px;
-    transform:rotate(360deg);
-    border-radius:3px;
-}
-
-#icon2.checked {
-    margin-right:15px;
-    margin-top:30px;
-}
-
-#icon2.checked:before {
-    content:'';
-    display:inline-block;
-    background:var(--checkmark);
-    transform:rotate(0);
-    width:20px;
-    height:5px;
-    margin:0;
-}
-
-#icon2.checked:after {
-    content:'';
-    display:inline-block;
-    background:var(--checkmark);
-    width:5px;
-    height:40px;
-    margin:0;
-    transform:rotate(0);
-}
-
-
-
-#btn3 {
+#btnB {
     width:120px;
     height:120px;
     border-radius:100%;
@@ -264,18 +190,18 @@
     justify-content:center;
     align-items:center;
     cursor:pointer;
-    box-shadow:0 2px 5px rgba(0,0,0,.5);
+    1box-shadow:0 2px 5px rgba(0,0,0,.5);
 }
 
-#icon3 {
+.relay {
     font-size:0;
     transform:rotate(225deg);
     transition:margin var(--time) ease;
     margin-top:16px;
-  filter:drop-shadow(-2px -2px 2px rgba(0,0,0,.8));
+  	1filter:drop-shadow(-2px -2px 2px rgba(0,0,0,.8));
 }
 
-#icon3:before {
+.relay:before {
     content:'';
     display:inline-block;
     width:94px;
@@ -288,7 +214,7 @@
     border-radius:3px;
 }
 
-#icon3:after {
+.relay:after {
     content:'';
     display:inline-block;
     width:10px;
@@ -301,12 +227,12 @@
     border-radius:3px;
 }
 
-#icon3.checked {
+.relay.checked {
     margin-right:30px;
     margin-top:60px;
 }
 
-#icon3.checked:before {
+.relay.checked:before {
     content:'';
     display:inline-block;
     background:var(--checkmark);
@@ -316,20 +242,19 @@
     margin:0;
 }
 
-#icon3.checked:after {
+.relay.checked:after {
     content:'';
     display:inline-block;
     background:var(--checkmark);
+    transform:rotate(0);
     width:10px;
     height:80px;
     margin:0;
-    transform:rotate(0);
 }
 
 table {width: 100%;}
 .stolb1 {width: 50%;}
 .stolb2 {width: 50%; vertical-align: middle;}
-
 
 </style>
 </head>
@@ -350,17 +275,17 @@ table {width: 100%;}
 		</tr>
 		<tr>
 			<td>
-				<div id="btn">
-				    <div class="checked" id="icon"></div>
+				<div id="btn1">
+				    <div class="sensors" id="sensor1State"></div>
 				</div>
 				<br />
 				<div id="btn2">
-				    <div class="" id="icon2"></div>
+				    <div class="sensors" id="sensor2State"></div>
 				</div>
 			</td>
 			<td>
-				<div id="btn3">
-				    <div class="" id="icon3"></div>
+				<div id="btnB">
+				    <div class="relay" id="relayState"></div>
 				</div>
 			</td>
 		</tr>
@@ -371,26 +296,26 @@ table {width: 100%;}
 	<div class="flex-item">
 		<h3>Режим<br />работы</h3>
 		<label>
-			<input type="radio" class="option-input radio" name="mode" checked />
-			АВТО
+			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
+			ОТКЛ
 		</label>
 		<label>
-			<input type="radio" class="option-input radio" name="mode" />
+			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
 			ВКЛ
 		</label>
 		<label>
-			<input type="radio" class="option-input radio" name="mode" />
-			ОТКЛ
+			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
+			АВТО
 		</label>
 		</div>
   	<div class="flex-item">
   		<h3>Задействовать<br />датчики</h3>
 		<label>
-    		<input type="checkbox" class="option-input checkbox" checked />
+    		<input type="checkbox" id="sensor1Use"  class="option-input checkbox" onchange="changeDS()"/>
     		Датчик 1
   		</label>
 		<label>
-			<input type="checkbox" class="option-input checkbox" />
+			<input type="checkbox" id="sensor2Use" class="option-input checkbox" onchange="changeDS()"/>
 		  	Датчик 2
 		</label>
   	</div>
@@ -398,239 +323,87 @@ table {width: 100%;}
 <br />
 <hr>
 	<div>
-		<label for="cvv">Задержка отключения, сек </label>
-		<input type="number" id="cvv" value="500">
+		<label for="delay">Задержка отключения, сек </label>
+		<input type="number" id="delay" onchange="changeDS()" value="500">
 	</div>
 </div>
 <div class='content'>
 	<h3>Статистика</h3>
 </div>
 
-<div class='content'>
-	<table>
-		<tr id='tr1'>
-			<td rowspan="3" id='stolb1'>
-				<canvas id="myCanvas" width="150" height="500"></canvas>
-			</td>
-			<td>
-				<input type='number' onchange="predelMaxSet()" id='predelMax' name='predelMax' value='2000'>
-				<p><button onclick="predMaxMinus()">-100</button>
-				<button onclick="predMaxPlus()">+100</button></p>
-
-			</td>
-		</tr>
-		<tr id='tr2'>
-			<td>
-				<h1 id='hz'>0</h1>
-				<button id='butOnCV' class="colortextred" onclick="onCV()">ЦВ</button>
-				<button id='butOnTG' class="colortextgray" onclick="onTG()">ТГ</button>
-			</td>
-		</tr>
-		<tr id='tr3'> 
-			<td>
-				<button onclick="predMinMinus()">-100</button>
-				<button onclick="predMinPlus()">+100</button>
-				<p><input type='number' onchange="predelMinSet()" id='predelMin' name='predelMin' value='0'></p>
-			</td>
-		</tr>
-	</table>
-</div>
 
 <script>
-var btn = document.querySelector('#btn');
-var icon = document.querySelector('#icon');
-btn.addEventListener(
-    'click', function() {
-        icon.classList.toggle('checked');
+
+let dataSend = {
+	page: "index",
+	relayMode: 2,
+	sensor1Use: false,
+	sensor2Use: false,
+	delay: 10
+};
+
+let data = {
+	relayState: false,
+	sensor1State: false,
+	sensor2State: false
+};
+
+
+function updateAllPage() {
+	document.getElementById("relayState").classList.toggle('checked', data["relayState"]);
+	document.getElementById("sensor1State").classList.toggle('checked', data["sensor1State"]);
+	document.getElementById("sensor2State").classList.toggle('checked', data["sensor2State"]);
+	document.getElementById("delay").value = dataSend["delay"];
+	document.getElementById("sensor1Use").checked = dataSend["sensor1Use"];
+	document.getElementById("sensor2Use").checked = dataSend["sensor2Use"];
+	document.getElementsByName('relayMode')[dataSend["relayMode"]].checked=true;
+};
+
+function updateDataSend() {
+	dataSend["delay"] = document.getElementById("delay").value;
+	dataSend["sensor1Use"] = document.getElementById("sensor1Use").checked;
+	dataSend["sensor2Use"] = document.getElementById("sensor2Use").checked;
+	let mode = document.getElementsByName('relayMode');
+	for (var i=0; i<mode.length; i++) {
+        if (mode[i].checked) {
+        	dataSend["relayMode"] = i;
+        }
     }
-);
+    //console.log('dataSend = ', dataSend);
+};
 
-var btn2 = document.querySelector('#btn2');
-var icon2 = document.querySelector('#icon2');
-btn2.addEventListener(
-    'click', function() {
-        icon2.classList.toggle('checked');
-    }
-);
+function sendData () {
+	console.log('TO Server: ', JSON.stringify( dataSend ));
+	if (connection) connection.send(JSON.stringify( dataSend ));
+};
 
-var btn3 = document.querySelector('#btn3');
-var icon3 = document.querySelector('#icon3');
-btn3.addEventListener(
-    'click', function() {
-        icon3.classList.toggle('checked');
-    }
-);
+function changeDS() {
+	updateDataSend();
+	sendData();
+};
 
 
-	let canvasAutoHeight = document.documentElement.clientHeight - document.getElementById("top").offsetHeight - document.getElementById("menu").offsetHeight - 3*10 - 3*5 - 20;
-	document.getElementById("myCanvas").height = canvasAutoHeight;
 
-	let data = {
-		page: "index",
-		freq: 0,
-		impulsIzmerenieEnable: 0  //0-off, 1-CV, 2-TG
-	};
+let connection = new WebSocket('ws://' + location.host + ':81/index.htm', ['arduino']);
 
-	let canvas = document.getElementById("myCanvas");
-	let width = canvas.width;
-	let height = canvas.height;
-	let widhtBar = 70;
-	let heightBar = height-10-10-5;
-	let bigLine = 20;
-	let litleLine = 10;
-	let shiftLine = 2;
-	let predelMax = 1*document.getElementById("predelMax").value;
-	let predelMin = 1*document.getElementById("predelMin").value;
-	let predelDelta = predelMax-predelMin;
-	let context = canvas.getContext("2d");
+connection.onerror = function (error) {
+	console.log('WebSocket Error ', error);
+	alert("Ошибка " + error.message);
+};
 
-	
-	function drawStart() {
-		context.clearRect( 0, 0, width, height );
-		context.lineWidth = 1;
-		context.strokeStyle = "green";
-		context.strokeRect( 10, height-10, widhtBar, -heightBar );
-
-		context.beginPath();
-		context.lineWidth = 1;
-		context.strokeStyle = "red";
-		context.font = "16px serif";
-		let i=0;
-		let iText=predelMin;
-		while (i <= heightBar){
-			context.moveTo(10+widhtBar+shiftLine, height-10-i);
-			context.lineTo(10+widhtBar+shiftLine+bigLine, height-10-i);
-			context.fillText(iText, 10+widhtBar+shiftLine+25, height-10-i+4);
-			i = i + heightBar/10;
-			iText = 1*iText + (predelMax-predelMin)/10;
-			iText = iText.toFixed(0);
+connection.onmessage = function (e) {
+	console.log('FROM Server: ', e.data);
+	let obj = JSON.parse(e.data);
+	for (x in obj) {
+		if ( data[x]  != null ) {
+			data[x] = obj[x];
+		} else if ( dataSend[x]  != null ) {
+			dataSend[x] = obj[x];
 		}
-		context.stroke();
-
-		context.lineWidth = 0.5;
-		i=0;
-		while (i <= heightBar){
-			context.moveTo(10+widhtBar+shiftLine, height-10-i);
-			context.lineTo(10+widhtBar+shiftLine+litleLine, height-10-i);
-			i = i + heightBar/50;
-		}
-		context.stroke();
 	}
-
-
-	function drawFrame() {
-		context.clearRect( 10, height-10, widhtBar, -heightBar );
-		context.fillStyle = "green";
-		context.fillRect( 10, height-10+heightBar*(predelMin/predelDelta), widhtBar, -heightBar*(data["freq"]/predelDelta) );
-	}
-
-
-	function updateAllPage() {
-		//document.getElementById("hz").innerHTML = data["freq"].toFixed(0);
-		document.getElementById("hz").innerHTML = Math.floor(data["freq"]);
-		if ( data["impulsIzmerenieEnable"] == 0 ) {
-			document.getElementById("butOnCV").className = "colortextgray";
-			document.getElementById("butOnTG").className = "colortextgray";
-		} else if (data["impulsIzmerenieEnable"] == 1) {
-			document.getElementById("butOnCV").className = "colortextred";
-			document.getElementById("butOnTG").className = "colortextgray";
-		} else if (data["impulsIzmerenieEnable"] == 2) {
-			document.getElementById("butOnCV").className = "colortextgray";
-			document.getElementById("butOnTG").className = "colortextred";
-		}
-	};
-
-	function sendData () {
-		console.log('TO Server: ', JSON.stringify( data ));
-		if (connection) connection.send(JSON.stringify( data ));
-	};
-
-
-	drawFrame();
-	drawStart();
 	updateAllPage();
-	let connection = new WebSocket('ws://' + location.host + ':81/index.htm', ['arduino']);
-	
-	connection.onopen = function () {
-		//connection.send('ping');		
-	};
+};
 
-	connection.onerror = function (error) {
-		console.log('WebSocket Error ', error);
-		alert("Ошибка " + error.message);
-	};
-
-	connection.onmessage = function (e) {
-		console.log('FROM Server: ', e.data);
-		let obj = JSON.parse(e.data);
-		for (x in obj) {
-			if ( data[x]  != null ) {
-				data[x] = obj[x];
-				data["freq"] = data["freq"]*5/10/2;
-				updateAllPage();
-				drawFrame();
-			}
-		}
-	};
-
-
-	function onCV() {
-		if (document.getElementById("butOnCV").className == "colortextred")  data["impulsIzmerenieEnable"] = 0;
-		else data["impulsIzmerenieEnable"] = 1;
-		updateAllPage();
-		sendData();
-	};
-
-	function onTG() {
-		if (document.getElementById("butOnTG").className == "colortextred")  data["impulsIzmerenieEnable"] = 0;
-		else  data["impulsIzmerenieEnable"] = 2;
-		updateAllPage();
-		sendData();
-	};
-
-
-	function predelMaxSet() {
-		predelMax = 1*document.getElementById("predelMax").value;
-		predelDelta = predelMax-predelMin;
-		drawStart();
-		drawFrame();
-	};
-	function predelMinSet() {
-		predelMin = 1*document.getElementById("predelMin").value;
-		predelDelta = predelMax-predelMin;
-		drawStart();
-		drawFrame();
-	};
-
-	function predMaxPlus() {
-		let max = 1*document.getElementById("predelMax").value;
-		document.getElementById("predelMax").value = max + 100;
-		predelMaxSet();
-	};
-	function predMaxMinus() {
-		let max = 1*document.getElementById("predelMax").value;
-		let min = 1*document.getElementById("predelMin").value;
-		if (max-100 > min) {
-			document.getElementById("predelMax").value = max - 100;
-			predelMaxSet();
-		}
-	};
-
-	function predMinPlus() {
-		let max = 1*document.getElementById("predelMax").value;
-		let min = 1*document.getElementById("predelMin").value;
-		if (min+100 < max) {
-			document.getElementById("predelMin").value = min + 100;
-			predelMinSet();
-		}
-	};
-	function predMinMinus() {
-		let min = 1*document.getElementById("predelMin").value;
-		if (min-100 > 0) {
-			document.getElementById("predelMin").value = min - 100;
-			predelMinSet();
-		}
-	};
 
 </script>
 </body>
