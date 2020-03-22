@@ -50,11 +50,12 @@
 
 <p><button onclick="sendData()">Сохранить</button></p>
 <p><button onclick="sendReset()">Перезагрузить</button></p>
+<p><button onclick="sendResetStat()">Сброс статистики</button></p>
 </div>
 
 <div class='content'>
     <h3>Обновление прошивки:</h3>
-    <form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form><br>
+    <form method='POST' onSubmit="return window.confirm('ОБНОВИТЬ ПРОШИВКУ?');" action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form><br>
 </div>
 
 </center>
@@ -127,9 +128,19 @@
 	};
 
 	function sendReset () {
-		let msg = 'RESET';
-		console.log('TO Server: ', msg);
-		connection.send(msg);
+		if (confirm("Вы хотите перезагрузить устройство?")) {
+			let msg = 'RESET';
+			console.log('TO Server: ', msg);
+			connection.send(msg);
+		}
+	};
+
+	function sendResetStat () {
+		if (confirm("Вы подтверждаете сброс статистики? После сброса информацию невозможно будет восстановить")) {
+			let msg = 'RESET_STAT';
+			console.log('TO Server: ', msg);
+			connection.send(msg);
+		}
 	};
 
 		

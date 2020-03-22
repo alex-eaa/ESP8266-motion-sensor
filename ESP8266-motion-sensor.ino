@@ -39,21 +39,34 @@ byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
 
+char nextFileName[15];
+
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
 unsigned int speedT = 200;  //период отправки данных, миллисек
+bool updateData = 0;
 
 int relayMode = 2;        //режим работы, 0-откл, 1-вкл, 2-авто
 bool relayState = 0;      //состояние реле 0-off, 1-on
-bool relayStatePrev = 0;
 bool sensor1State = 0;    //состояние сенсора №1: 0-off, 1-on
-bool sensor1StatePrev = 0;
 bool sensor2State = 0;    //состояние сенсора №2: 0-off, 1-on
-bool sensor2StatePrev = 0;
 bool sensor1Use = 1;      //использование сенсора №1. 0-off, 1-on
-bool sensor1UsePrev = 0;
 bool sensor2Use = 0;      //использование сенсора №2. 0-off, 1-on
-bool sensor2UsePrev = 0;
+unsigned int delayOff = 20000;     //Задержка отключения, мс
+unsigned int startDelayOff = 0;    //вспом. для delayOff
+
+bool preRelayState;
+bool overfloControl = 0;     //Бит включающий контроль переполнения millis()
+
+//Statistic variables
+unsigned int numbOn = 0;                //количество включений
+double timeRelayOn = 0;                 //время в состоянии реле ВКЛ, мс
+unsigned int startTimeRelayOn = 0;      //вспом. для timeRelayOn
+unsigned int mdTimeRelayOn = 0;         //максимальный промежуток времени включеного реле, мс
+double timeESPOn = 0;                   //время с момента включения устройства, мс
+int startTimeESPOn = 0;                 //вспом. для timeESPOn
+unsigned int timeSaveStat = 86400000;   //периодичность сохранения статистики, мс
+unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
 
 
 WebSocketsServer webSocket(81);
@@ -76,9 +89,11 @@ void setup() {
   //printChipInfo();
 
   SPIFFS.begin();
-  //scanAllFile();
-  //saveConfiguration();
-  //printFile("/config.txt");
+  scanAllFile();
+  //deleteAndCreateSTTfiles();
+  scanSttFile();
+  printFile("/config.txt");
+  printFile("/maxFileName.txt");
 
   //Запуск точки доступа с параметрами поумолчанию
   if ( !loadConfiguration() ||  digitalRead(BUTTON) == 0)  startAp("ESP", "11111111");
@@ -102,55 +117,123 @@ void setup() {
   webServer_init();      //инициализация HTTP интерфейса
   webSocket_init();      //инициализация webSocket интерфейса
 
-  sensor1Use = 1;
-  sensor2Use = 0;
+  startTimeSaveStat = millis();
+  startTimeESPOn = millis();
 }
 
 
 void loop() {
-  //wifi_init();
+  wifi_init();
   webSocket.loop();
   server.handleClient();
 
-  if (sensor1Use == 1 && sensor2Use == 0) {
-    relayState = digitalRead(SENSOR1);
-  } else if (sensor1Use == 0 && sensor2Use == 1) {
-    relayState = digitalRead(SENSOR2);
-  } else if (sensor1Use == 1 && sensor2Use == 1) {
-    relayState = digitalRead(SENSOR1) && digitalRead(SENSOR2);
+  //Обработка состояния сенсоров
+  int prevSensorState = sensor1State;
+  sensor1State = digitalRead(SENSOR1);
+  if (prevSensorState != sensor1State)  updateData = 1;
+  prevSensorState = sensor2State;
+  sensor2State = digitalRead(SENSOR2);
+  if (prevSensorState != sensor2State)  updateData = 1;
+
+
+  //Определение состояния реле
+  switch (relayMode) {
+    case 0:
+      relayState = 0;
+      break;
+    case 1:
+      relayState = 1;
+      break;
+    case 2:
+      if (sensor1Use == 1 && sensor2Use == 0) {
+        preRelayState = sensor1State;
+      } else if (sensor1Use == 0 && sensor2Use == 1) {
+        preRelayState = sensor2State;
+      } else if (sensor1Use == 1 && sensor2Use == 1) {
+        preRelayState = sensor1State & sensor2State;
+      }
+
+      if (relayState == 0 && preRelayState == 1) {
+        relayState = 1;
+        startDelayOff = millis();
+      }
+      else if (relayState == 1 && preRelayState == 0 && millis() - startDelayOff > delayOff) {
+        relayState = 0;
+      }
+      else if (preRelayState == 1) {
+        startDelayOff = millis();
+      }
+      break;
   }
 
-  if (relayState == 1) {
-    digitalWrite(RELAY, HIGH);
-    digitalWrite(LED_GREEN, HIGH);
-    digitalWrite(LED_WIFI, 0);
-  } else {
-    digitalWrite(RELAY, LOW);
-    digitalWrite(LED_GREEN, LOW);
-    digitalWrite(LED_WIFI, 1);
+  //Изменение состояния реле
+  if (digitalRead(RELAY) == 1 && relayState == 0) {
+    digitalWrite(RELAY, 0);
+    int deltaTimeRelayOn = millis() - startTimeRelayOn;
+    timeRelayOn += deltaTimeRelayOn;
+    if (deltaTimeRelayOn > mdTimeRelayOn)  mdTimeRelayOn = deltaTimeRelayOn;
+    digitalWrite(LED_GREEN, 0);
+    //digitalWrite(LED_WIFI, 1);
+    updateData = 1;
+  } else if (digitalRead(RELAY) == 0 && relayState == 1) {
+    digitalWrite(RELAY, 1);
+    startTimeRelayOn = millis();
+    digitalWrite(LED_GREEN, 1);
+    //digitalWrite(LED_WIFI, 0);
+    numbOn ++;
+    updateData = 1;
   }
 
-  if (relayStatePrev != relayState ) {
+  //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
+  if (updateData == 1) {
     Serial.print("relayState = ");
     Serial.println(relayState);
+    Serial.print("sensor1State = ");
+    Serial.println(sensor1State);
+    Serial.print("sensor2State = ");
+    Serial.println(sensor2State);
+    Serial.print("numbOn = ");
+    Serial.println(numbOn);
+    Serial.print("timeRelayOn = ");
+    Serial.println(timeRelayOn);
+    Serial.print("timeESPOn = ");
+    Serial.println(timeESPOn);
+    Serial.print("mdTimeRelayOn = ");
+    Serial.println(millis() - mdTimeRelayOn);
+    if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
+      String data = serializationToJson_index();
+      int startT_broadcastTXT = micros();
+      webSocket.broadcastTXT(data);
+      int T_broadcastTXT = micros() - startT_broadcastTXT;
+      if (T_broadcastTXT > 100000)  checkPing();
+    }
+    updateData = 0;
   }
 
-  //Serial.println(impulsFreq);
-  //Отправка Speed данных клиентам каждые speedT миллисекунд, при условии что данныее обновились и клиенты подключены
-  if (true) {
-    if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
-      if (relayStatePrev != relayState ) {
-        String data = "{\"relayState\":";
-        data += relayState;
-        data += "}";
-        int startT_broadcastTXT = micros();
-        webSocket.broadcastTXT(data);
-        int T_broadcastTXT = micros() - startT_broadcastTXT;
-        if (T_broadcastTXT > 100000)  checkPing();
-      }
-    }
+  if (millis() - startTimeESPOn > 5000) {
+    timeESPOn += (millis() - startTimeESPOn);
+    startTimeESPOn = millis();
   }
-  relayStatePrev = relayState;
+
+  //Сохранение stat данных в файл с периодичностью timeSaveStat
+  if (millis() - startTimeSaveStat > timeSaveStat) {
+    saveStat(nextFileName);
+    startTimeSaveStat = millis();
+  }
+
+  //Устанавливаем бит контроля переполнения таймера millis, при достижении им 4.200.000.000 из 4.294.967.296
+  if (overfloControl == 0 && millis() > 4200000000) {
+    overfloControl = 1;
+  }
+
+  //Если произошло переполнение millis
+  if (overfloControl == 1 && millis() > 0 && millis() < 10000) {
+    overfloControl = 0;
+    startTimeSaveStat = millis();
+    startTimeESPOn = millis();
+    startTimeRelayOn = millis();
+  }
+
 }
 
 

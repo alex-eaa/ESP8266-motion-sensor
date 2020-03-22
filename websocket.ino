@@ -42,8 +42,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] get Text: %s\n", num, payload);
 
         if (strcmp((char *)payload, "RESET") == 0)  ESP.reset();
-        else if (strcmp((char *)payload, "on") == 0)   sensor1Enable = 1;
-        else if (strcmp((char *)payload, "off") == 0)  sensor1Enable = 0;
+        else if (strcmp((char *)payload, "RESET_STAT") == 0){
+          deleteAndCreateSTTfiles();
+          delay(500);
+          ESP.reset();
+        }
+        //else if (strcmp((char *)payload, "on") == 0)   sensor1Use = 1;
         else {
           DynamicJsonDocument doc(1024);
           DeserializationError error = deserializeJson(doc, payload);
@@ -52,10 +56,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           }
 
           if (doc["page"].as<String>() == "index") {
-            relayEnable = doc["relayEnable"];      //Serial.println(relayEnable);
-            sensor1Enable = doc["sensor1Enable"];      //Serial.println(sensor1Enable);
-            sensor2Enable = doc["sensor2Enable"];      //Serial.println(sensor2Enable);
-            //saveConfiguration();
+            delayOff = doc["delayOff"];          //Serial.println(delayOff);
+            relayMode = doc["relayMode"];        //Serial.println(relayState);
+            sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1State);
+            sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2State);
+            updateData = 1;
+            saveConfiguration();
+            saveStat(nextFileName);
           }
           else if (doc["page"].as<String>() == "setup") {
             String stemp = doc["p_ssid"].as<String>();
@@ -87,6 +94,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
             wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
             saveConfiguration();
+            saveStat(nextFileName);
           }
         }
         break;
@@ -106,9 +114,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
-  doc["relayEnable"] = relayEnable;
-  doc["sensor1Enable"] = sensor1Enable;
-  doc["sensor2Enable"] = sensor2Enable;
+  doc["delayOff"] = delayOff;
+  doc["relayMode"] = relayMode;
+  doc["sensor1Use"] = sensor1Use;
+  doc["sensor2Use"] = sensor2Use;
+  doc["relayState"] = relayState;
+  doc["sensor1State"] = sensor1State;
+  doc["sensor2State"] = sensor2State;
+  doc["numbOn"] = numbOn;
+  doc["timeRelayOn"] = timeRelayOn;
+  doc["mdTimeRelayOn"] = mdTimeRelayOn;
+  doc["timeESPOn"] = timeESPOn;
   String output = "";
   serializeJson(doc, output);
   return output;

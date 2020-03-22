@@ -4,7 +4,7 @@ bool loadConfiguration()
   Serial.println(F("\nLoad configuration from file."));
   File file = SPIFFS.open("/config.txt", "r");
   if (!file) {
-    Serial.println(F("!!! FAILED to read configuration file"));
+    Serial.println(F("!!! FAILED to read configuration file, using default configuration"));
     return 0;
   }
 
@@ -12,14 +12,17 @@ bool loadConfiguration()
 
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
-    Serial.println(F("Failed to read file, using default configuration"));
+    Serial.println(F("Failed Deserialization configuration file"));
+    file.close();
     return 1;
   }
 
   // Copy values from the JsonDocument to the value config
-  sensor1Enable = doc["sensor1Enable"];    //Serial.println(sensor1Enable);
-  sensor2Enable = doc["sensor2Enable"];    //Serial.println(sensor1Enable);
-  
+  delayOff = doc["delayOff"];        //Serial.println(delayOff);
+  relayMode = doc["relayMode"];      //Serial.println(relayMode);
+  sensor1Use = doc["sensor1Use"];    //Serial.println(sensor1Use);
+  sensor2Use = doc["sensor2Use"];    //Serial.println(sensor2Use);
+
   wifiAP_mode = doc["wifiAP_mode"];    //Serial.println(wifiAP_mode);
 
   String stemp = doc["p_ssid"].as<String>();
@@ -75,8 +78,10 @@ void saveConfiguration()
   }
 
   DynamicJsonDocument doc(1024);
-  doc["sensor1Enable"] = sensor1Enable;
-  doc["sensor2Enable"] = sensor2Enable;
+  doc["delayOff"] = delayOff;
+  doc["relayMode"] = relayMode;
+  doc["sensor1Use"] = sensor1Use;
+  doc["sensor2Use"] = sensor2Use;
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["p_ssidAP"] = p_ssidAP;
   doc["p_passwordAP"] = p_passwordAP;
@@ -92,8 +97,62 @@ void saveConfiguration()
   // Serialize JSON to file
   if (serializeJson(doc, file) == 0) {
     Serial.println(F("Failed to write to file"));
+  } else {
+    Serial.println(F("Save config complited."));
   }
-  Serial.println(F("Save config complited."));
+  file.close();
+}
+
+
+//Чтение данных из файла статистики
+bool loadStat(char *filename)
+{
+  Serial.print(F("\nLoad stat from file: ")); Serial.println(filename);
+  File file = SPIFFS.open(filename, "r");
+  if (!file) {
+    Serial.println(F("!!! FAILED to read stat file"));
+    return 0;
+  }
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, file);
+  if (error) {
+    Serial.println(F("Failed Deserialization file stat"));
+    file.close();
+    return 1;
+  }
+
+  numbOn = doc["numbOn"];                Serial.print("numbOn= "); Serial.println(numbOn);
+  timeRelayOn = doc["timeRelayOn"];      Serial.print("timeRelayOn = "); Serial.println(timeRelayOn);
+
+  file.close();
+  return 1;
+}
+
+
+//Сохранение данных в файл статистики
+void saveStat(char *filename)
+{
+  Serial.print(F("\nSave stat to file: ")); Serial.println(filename);
+  //char *filename = "/stat.txt";
+
+  //SPIFFS.remove(filename);
+
+  File file = SPIFFS.open(filename, "w");
+  if (!file) {
+    Serial.println(F("failed to open config file for writing"));
+    return;
+  }
+
+  DynamicJsonDocument doc(1024);
+  doc["numbOn"] = numbOn;
+  doc["timeRelayOn"] = timeRelayOn;
+
+  if (serializeJson(doc, file) == 0) {
+    Serial.println(F("Failed to write to file"));
+  } else {
+    Serial.println(F("Save file stat complited"));
+  }
   file.close();
 }
 
@@ -101,7 +160,6 @@ void saveConfiguration()
 //START Prints the content of a file to the Serial
 void printFile(const char *filename)
 {
-  // Open file for reading
   File file = SPIFFS.open(filename, "r");
   if (!file) {
     Serial.println(F("Failed to read file"));
@@ -141,5 +199,94 @@ void scanAllFile()
     size_t fileSize = dir.fileSize();
     Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
   }
-  Serial.printf("\n");
+  Serial.println("\nScan file complited");
+}
+
+void scanSttFile()
+{
+  int maxNumberFile = 0;
+  int minNumberFile = 1000000;
+  
+  Dir dir = SPIFFS.openDir("/");
+  while (dir.next()) {
+    String fileName = dir.fileName();
+    int index = 0;
+    if (fileName.indexOf("/stt") == 0) {
+      //Serial.println(fileName.c_str());
+      int numberFile = fileName.substring(4, 10).toInt();
+      //Serial.println(numberFile);
+      if (numberFile > maxNumberFile) {
+        maxNumberFile = numberFile;
+      }
+      if (numberFile < minNumberFile) {
+        minNumberFile = numberFile;
+      }
+    }
+  }
+
+  //Serial.print("minNumberFile = ");  Serial.println(minNumberFile);
+  //Serial.print("maxNumberFile = ");  Serial.println(maxNumberFile);
+
+  char maxFileName[15];
+  sprintf(maxFileName, "/stt%06d.txt", maxNumberFile);
+  Serial.print("maxFileName = ");  Serial.println(maxFileName);
+  loadStat(maxFileName);
+
+  char minFileName[15];
+  sprintf(minFileName, "/stt%06d.txt", minNumberFile);
+  Serial.print("minFileName = ");  Serial.println(minFileName);
+
+  sprintf(nextFileName, "/stt%06d.txt", maxNumberFile + 1);
+  Serial.print("nextFileName = ");  Serial.println(nextFileName);
+
+  if (SPIFFS.exists(minFileName)) {
+    SPIFFS.rename(minFileName, nextFileName);
+    delay(20);
+  }
+  saveStat(nextFileName);
+  delay(20);
+}
+
+
+//Удаляет файлы статистики и создает новые
+void deleteAndCreateSTTfiles() {
+  Dir dir = SPIFFS.openDir("/");
+  while (dir.next()) {
+    String fileName = dir.fileName();
+    if (fileName.indexOf("/stt") == 0) {
+      SPIFFS.remove(fileName);
+      Serial.print("DELETED FILE - ");
+      Serial.println(fileName.c_str());
+      delay(100);
+    }
+  }
+  File filez = SPIFFS.open("/stt0000000.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000001.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000002.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000003.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000004.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000005.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000006.txt", "w");
+  filez.close();
+  filez = SPIFFS.open("/stt000007.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000008.txt", "w");
+  filez.close();
+  delay(100);
+  filez = SPIFFS.open("/stt000009.txt", "w");
+  filez.close();
+  delay(100);
 }
