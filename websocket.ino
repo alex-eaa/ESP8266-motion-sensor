@@ -60,7 +60,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             relayMode = doc["relayMode"];        //Serial.println(relayState);
             sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1State);
             sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2State);
-            updateData = 1;
+            dataUpdateBit = 1;
             saveConfiguration();
             saveStat(nextFileName);
           }

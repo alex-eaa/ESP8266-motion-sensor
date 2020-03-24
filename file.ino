@@ -136,7 +136,7 @@ void saveStat(char *filename)
   Serial.print(F("\nSave stat to file: ")); Serial.println(filename);
   //char *filename = "/stat.txt";
 
-  //SPIFFS.remove(filename);
+  SPIFFS.remove(filename);
 
   File file = SPIFFS.open(filename, "w");
   if (!file) {
@@ -202,6 +202,7 @@ void scanAllFile()
   Serial.println("\nScan file complited");
 }
 
+
 void scanSttFile()
 {
   int maxNumberFile = 0;
@@ -235,14 +236,11 @@ void scanSttFile()
   char minFileName[15];
   sprintf(minFileName, "/stt%06d.txt", minNumberFile);
   Serial.print("minFileName = ");  Serial.println(minFileName);
+  SPIFFS.remove(minFileName);
 
   sprintf(nextFileName, "/stt%06d.txt", maxNumberFile + 1);
   Serial.print("nextFileName = ");  Serial.println(nextFileName);
 
-  if (SPIFFS.exists(minFileName)) {
-    SPIFFS.rename(minFileName, nextFileName);
-    delay(20);
-  }
   saveStat(nextFileName);
   delay(20);
 }
@@ -255,9 +253,8 @@ void deleteAndCreateSTTfiles() {
     String fileName = dir.fileName();
     if (fileName.indexOf("/stt") == 0) {
       SPIFFS.remove(fileName);
-      Serial.print("DELETED FILE - ");
-      Serial.println(fileName.c_str());
-      delay(100);
+      Serial.print("DELETED FILE - ");   Serial.println(fileName.c_str());
+      delay(50);
     }
   }
   File filez = SPIFFS.open("/stt0000000.txt", "w");

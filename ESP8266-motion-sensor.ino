@@ -21,14 +21,14 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#define LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
-#define LED_RED 15     // пин, красного светодиода 
-#define LED_GREEN 12   // пин, зеленого светодиода 
-#define LED_BLUE 13    // пин, синего светодиода
-#define BUTTON 4       // номер пина кнопки GPIO4 (D2)
-#define SENSOR1 14     // пин, вход датчика движения №1
-#define SENSOR2 5      // пин, вход датчика движения №2
-#define RELAY 16       // пин, выход управления реле
+#define LED_WIFI_GPIO 2     // номер пина светодиода GPIO2 (D4)
+#define LED_RED_GPIO 15     // пин, красного светодиода 
+#define LED_GREEN_GPIO 12   // пин, зеленого светодиода 
+#define LED_BLUE_GPIO 13    // пин, синего светодиода
+#define BUTTON_GPIO 4       // номер пина кнопки GPIO4 (D2)
+#define SENSOR1_GPIO 14     // пин, вход датчика движения №1
+#define SENSOR2_GPIO 5      // пин, вход датчика движения №2
+#define RELAY_GPIO 16       // пин, выход управления реле
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
@@ -44,7 +44,7 @@ char nextFileName[15];
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
 unsigned int speedT = 200;  //период отправки данных, миллисек
-bool updateData = 0;
+bool dataUpdateBit = 0;
 
 int relayMode = 2;        //режим работы, 0-откл, 1-вкл, 2-авто
 bool relayState = 0;      //состояние реле 0-off, 1-on
@@ -77,15 +77,15 @@ ESP8266WebServer server(80);
 void setup() {
   Serial.begin(115200);
   Serial.println("");
-  pinMode(LED_WIFI, OUTPUT);
-  pinMode(LED_GREEN, OUTPUT);
-  pinMode(BUTTON, INPUT_PULLUP);
-  pinMode(SENSOR1, INPUT_PULLUP);
-  pinMode(SENSOR2, INPUT_PULLUP);
-  pinMode(RELAY, OUTPUT);
-  digitalWrite(LED_WIFI, HIGH);
-  digitalWrite(LED_GREEN, LOW);
-  digitalWrite(RELAY, LOW);
+  pinMode(LED_WIFI_GPIO, OUTPUT);
+  pinMode(LED_GREEN_GPIO, OUTPUT);
+  pinMode(BUTTON_GPIO, INPUT_PULLUP);
+  pinMode(SENSOR1_GPIO, INPUT_PULLUP);
+  pinMode(SENSOR2_GPIO, INPUT_PULLUP);
+  pinMode(RELAY_GPIO, OUTPUT);
+  digitalWrite(LED_WIFI_GPIO, HIGH);
+  digitalWrite(LED_GREEN_GPIO, LOW);
+  digitalWrite(RELAY_GPIO, LOW);
   //printChipInfo();
 
   SPIFFS.begin();
@@ -96,11 +96,11 @@ void setup() {
   printFile("/maxFileName.txt");
 
   //Запуск точки доступа с параметрами поумолчанию
-  if ( !loadConfiguration() ||  digitalRead(BUTTON) == 0)  startAp("ESP", "11111111");
+  if ( !loadConfiguration() ||  digitalRead(BUTTON_GPIO) == 0)  startAp("ESP", "11111111");
   //Запуск точки доступа
-  else if (digitalRead(BUTTON) == 1 && wifiAP_mode == 1)   startAp(p_ssidAP, p_passwordAP);
+  else if (digitalRead(BUTTON_GPIO) == 1 && wifiAP_mode == 1)   startAp(p_ssidAP, p_passwordAP);
   //Запуск подключения клиента к точке доступа
-  else if (digitalRead(BUTTON) == 1 && wifiAP_mode == 0) {
+  else if (digitalRead(BUTTON_GPIO) == 1 && wifiAP_mode == 0) {
     if (WiFi.getPersistent() == true)    WiFi.persistent(false);
     WiFi.softAPdisconnect(true);
     WiFi.persistent(true);
@@ -129,11 +129,11 @@ void loop() {
 
   //Обработка состояния сенсоров
   int prevSensorState = sensor1State;
-  sensor1State = digitalRead(SENSOR1);
-  if (prevSensorState != sensor1State)  updateData = 1;
+  sensor1State = digitalRead(SENSOR1_GPIO);
+  if (prevSensorState != sensor1State)  dataUpdateBit = 1;
   prevSensorState = sensor2State;
-  sensor2State = digitalRead(SENSOR2);
-  if (prevSensorState != sensor2State)  updateData = 1;
+  sensor2State = digitalRead(SENSOR2_GPIO);
+  if (prevSensorState != sensor2State)  dataUpdateBit = 1;
 
 
   //Определение состояния реле
@@ -167,25 +167,25 @@ void loop() {
   }
 
   //Изменение состояния реле
-  if (digitalRead(RELAY) == 1 && relayState == 0) {
-    digitalWrite(RELAY, 0);
+  if (digitalRead(RELAY_GPIO) == 1 && relayState == 0) {
+    digitalWrite(RELAY_GPIO, 0);
     int deltaTimeRelayOn = millis() - startTimeRelayOn;
     timeRelayOn += deltaTimeRelayOn;
     if (deltaTimeRelayOn > mdTimeRelayOn)  mdTimeRelayOn = deltaTimeRelayOn;
-    digitalWrite(LED_GREEN, 0);
-    //digitalWrite(LED_WIFI, 1);
-    updateData = 1;
-  } else if (digitalRead(RELAY) == 0 && relayState == 1) {
-    digitalWrite(RELAY, 1);
+    digitalWrite(LED_GREEN_GPIO, 0);
+    //digitalWrite(LED_WIFI_GPIO, 1);
+    dataUpdateBit = 1;
+  } else if (digitalRead(RELAY_GPIO) == 0 && relayState == 1) {
+    digitalWrite(RELAY_GPIO, 1);
     startTimeRelayOn = millis();
-    digitalWrite(LED_GREEN, 1);
-    //digitalWrite(LED_WIFI, 0);
+    digitalWrite(LED_GREEN_GPIO, 1);
+    //digitalWrite(LED_WIFI_GPIO, 0);
     numbOn ++;
-    updateData = 1;
+    dataUpdateBit = 1;
   }
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
-  if (updateData == 1) {
+  if (dataUpdateBit == 1) {
     Serial.print("relayState = ");
     Serial.println(relayState);
     Serial.print("sensor1State = ");
@@ -207,7 +207,7 @@ void loop() {
       int T_broadcastTXT = micros() - startT_broadcastTXT;
       if (T_broadcastTXT > 100000)  checkPing();
     }
-    updateData = 0;
+    dataUpdateBit = 0;
   }
 
   if (millis() - startTimeESPOn > 5000) {
