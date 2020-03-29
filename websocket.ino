@@ -43,7 +43,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
         if (strcmp((char *)payload, "RESET") == 0)  ESP.reset();
         else if (strcmp((char *)payload, "RESET_STAT") == 0){
-          deleteAndCreateSTTfiles();
+          SPIFFS.remove(STAT_FILE);
           delay(500);
           ESP.reset();
         }
@@ -61,8 +61,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1State);
             sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2State);
             dataUpdateBit = 1;
-            saveConfiguration();
-            saveStat(nextFileName);
+            saveFile(CONFIG_FILE);
+            saveFile(STAT_FILE);
           }
           else if (doc["page"].as<String>() == "setup") {
             String stemp = doc["p_ssid"].as<String>();
@@ -93,8 +93,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             gtw[2] = doc["gtw"][2];    //Serial.println(gtw[2]);
             gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
             wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
-            saveConfiguration();
-            saveStat(nextFileName);
+            saveFile(CONFIG_FILE);
+            saveFile(STAT_FILE);
           }
         }
         break;

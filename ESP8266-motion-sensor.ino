@@ -29,6 +29,8 @@
 #define SENSOR1_GPIO 14     // пин, вход датчика движения №1
 #define SENSOR2_GPIO 5      // пин, вход датчика движения №2
 #define RELAY_GPIO 16       // пин, выход управления реле
+#define STAT_FILE "/stat.txt"
+#define CONFIG_FILE "/config.txt"
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
@@ -38,8 +40,6 @@ char *p_password = "1234567890lamp";
 byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
-
-char nextFileName[15];
 
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
@@ -68,15 +68,12 @@ int startTimeESPOn = 0;                 //вспом. для timeESPOn
 unsigned int timeSaveStat = 86400000;   //периодичность сохранения статистики, мс
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
 
-
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
-//int timeT1 = millis();
-
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("");
+  Serial.println("\n");
   pinMode(LED_WIFI_GPIO, OUTPUT);
   pinMode(LED_GREEN_GPIO, OUTPUT);
   pinMode(BUTTON_GPIO, INPUT_PULLUP);
@@ -90,13 +87,12 @@ void setup() {
 
   SPIFFS.begin();
   scanAllFile();
-  //deleteAndCreateSTTfiles();
-  scanSttFile();
-  printFile("/config.txt");
-  printFile("/maxFileName.txt");
+  printFile(CONFIG_FILE);
+  printFile(STAT_FILE);
+  loadFile(STAT_FILE);
 
   //Запуск точки доступа с параметрами поумолчанию
-  if ( !loadConfiguration() ||  digitalRead(BUTTON_GPIO) == 0)  startAp("ESP", "11111111");
+  if ( !loadFile(CONFIG_FILE) ||  digitalRead(BUTTON_GPIO) == 0)  startAp("ESP", "11111111");
   //Запуск точки доступа
   else if (digitalRead(BUTTON_GPIO) == 1 && wifiAP_mode == 1)   startAp(p_ssidAP, p_passwordAP);
   //Запуск подключения клиента к точке доступа
@@ -200,6 +196,7 @@ void loop() {
     Serial.println(timeESPOn);
     Serial.print("mdTimeRelayOn = ");
     Serial.println(millis() - mdTimeRelayOn);
+    Serial.println();
     if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
       String data = serializationToJson_index();
       int startT_broadcastTXT = micros();
@@ -217,15 +214,15 @@ void loop() {
 
   //Сохранение stat данных в файл с периодичностью timeSaveStat
   if (millis() - startTimeSaveStat > timeSaveStat) {
-    saveStat(nextFileName);
+    saveFile(STAT_FILE);
     startTimeSaveStat = millis();
   }
 
+  //Контроль переполнения таймера millis
   //Устанавливаем бит контроля переполнения таймера millis, при достижении им 4.200.000.000 из 4.294.967.296
   if (overfloControl == 0 && millis() > 4200000000) {
     overfloControl = 1;
   }
-
   //Если произошло переполнение millis
   if (overfloControl == 1 && millis() > 0 && millis() < 10000) {
     overfloControl = 0;
