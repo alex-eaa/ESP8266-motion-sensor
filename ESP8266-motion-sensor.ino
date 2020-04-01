@@ -77,12 +77,12 @@ void setup() {
   pinMode(LED_WIFI_GPIO, OUTPUT);
   pinMode(LED_GREEN_GPIO, OUTPUT);
   pinMode(BUTTON_GPIO, INPUT_PULLUP);
-  pinMode(SENSOR1_GPIO, INPUT_PULLUP);
-  pinMode(SENSOR2_GPIO, INPUT_PULLUP);
+  pinMode(SENSOR1_GPIO, INPUT);
+  pinMode(SENSOR2_GPIO, INPUT);
   pinMode(RELAY_GPIO, OUTPUT);
   digitalWrite(LED_WIFI_GPIO, HIGH);
   digitalWrite(LED_GREEN_GPIO, LOW);
-  digitalWrite(RELAY_GPIO, LOW);
+  digitalWrite(RELAY_GPIO, 1);
   //printChipInfo();
 
   SPIFFS.begin();
@@ -146,7 +146,7 @@ void loop() {
       } else if (sensor1Use == 0 && sensor2Use == 1) {
         preRelayState = sensor2State;
       } else if (sensor1Use == 1 && sensor2Use == 1) {
-        preRelayState = sensor1State & sensor2State;
+        preRelayState = sensor1State | sensor2State;
       }
 
       if (relayState == 0 && preRelayState == 1) {
@@ -163,16 +163,16 @@ void loop() {
   }
 
   //Изменение состояния реле
-  if (digitalRead(RELAY_GPIO) == 1 && relayState == 0) {
-    digitalWrite(RELAY_GPIO, 0);
+  if (digitalRead(RELAY_GPIO) == 0 && relayState == 0) {
+    digitalWrite(RELAY_GPIO, 1);
     int deltaTimeRelayOn = millis() - startTimeRelayOn;
     timeRelayOn += deltaTimeRelayOn;
     if (deltaTimeRelayOn > mdTimeRelayOn)  mdTimeRelayOn = deltaTimeRelayOn;
     digitalWrite(LED_GREEN_GPIO, 0);
     //digitalWrite(LED_WIFI_GPIO, 1);
     dataUpdateBit = 1;
-  } else if (digitalRead(RELAY_GPIO) == 0 && relayState == 1) {
-    digitalWrite(RELAY_GPIO, 1);
+  } else if (digitalRead(RELAY_GPIO) == 1 && relayState == 1) {
+    digitalWrite(RELAY_GPIO, 0);
     startTimeRelayOn = millis();
     digitalWrite(LED_GREEN_GPIO, 1);
     //digitalWrite(LED_WIFI_GPIO, 0);
@@ -182,21 +182,23 @@ void loop() {
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
   if (dataUpdateBit == 1) {
-    Serial.print("relayState = ");
-    Serial.println(relayState);
-    Serial.print("sensor1State = ");
-    Serial.println(sensor1State);
-    Serial.print("sensor2State = ");
-    Serial.println(sensor2State);
-    Serial.print("numbOn = ");
-    Serial.println(numbOn);
-    Serial.print("timeRelayOn = ");
-    Serial.println(timeRelayOn);
-    Serial.print("timeESPOn = ");
-    Serial.println(timeESPOn);
-    Serial.print("mdTimeRelayOn = ");
-    Serial.println(millis() - mdTimeRelayOn);
-    Serial.println();
+    if (false) {
+      Serial.print("relayState = ");
+      Serial.println(relayState);
+      Serial.print("sensor1State = ");
+      Serial.println(sensor1State);
+      Serial.print("sensor2State = ");
+      Serial.println(sensor2State);
+      Serial.print("numbOn = ");
+      Serial.println(numbOn);
+      Serial.print("timeRelayOn = ");
+      Serial.println(timeRelayOn);
+      Serial.print("timeESPOn = ");
+      Serial.println(timeESPOn);
+      Serial.print("mdTimeRelayOn = ");
+      Serial.println(millis() - mdTimeRelayOn);
+      Serial.println();
+    }
     if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
       String data = serializationToJson_index();
       int startT_broadcastTXT = micros();
