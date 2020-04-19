@@ -10,16 +10,19 @@
 <body>
 
 <div id="container">
-	<ul id="menu">
-		<li><div id="hamburger"><span class="hamburger"></span></div>
-			<ul><li><a href="index.htm">Главная</a></li>
-				<li><a href="setup.htm">Настройка сети</a></li>
-				<li><a href="edit.htm">Файлы</a></li>
-				<li><a href="update.htm">Обновление</a></li>
-			</ul>
-		</li>
-	</ul>
-	<p>Сетевые настройки</p>
+	<div id="part1">
+		<ul id="menu">
+			<li><div id="hamburger"><span class="hamburger"></span></div>
+				<ul><li><a href="index.htm">Главная</a></li>
+					<li><a href="setup.htm">Настройка сети</a></li>
+					<li><a href="edit.htm">Файлы</a></li>
+					<li><a href="update.htm">Обновление</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+	<div id="part3">w</div>
+	<div id="part2">Сетевые настройки</div>
 </div>
 
 <div class='content'>
@@ -149,7 +152,9 @@
 	};
 
 
-	let connection = new WebSocket('ws://' + location.host + ':81/setup.htm', ['arduino']);
+	let wsAdress = 'ws://' + location.host + ':81/setup.htm';
+	//let wsAdress = 'ws://192.168.43.43:81/setup.htm';
+	let connection = new WebSocket(wsAdress, ['arduino']);
 	console.log(connection);
 	
 	connection.onopen = function () {
@@ -204,6 +209,7 @@
 			}
 		}
 		updateDisabledElements();
+		document.getElementById("part3").classList.toggle("part3A");
 	};
 
 

@@ -68,8 +68,10 @@ unsigned int startTimeRelayOn = 0;      //вспом. для timeRelayOn
 unsigned int mdTimeRelayOn = 0;         //максимальный промежуток времени включеного реле, мс
 double timeESPOn = 0;                   //время с момента включения устройства, мс
 int startTimeESPOn = 0;                 //вспом. для timeESPOn
-unsigned int timeSaveStat = 86400000;   //периодичность сохранения статистики, мс
+unsigned int timeSaveStat = 43200000;   //периодичность сохранения статистики, мс
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
+
+unsigned int timerSendData;
 
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
@@ -133,6 +135,7 @@ void setup() {
 
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
+  timerSendData = millis();
 }
 
 
@@ -225,6 +228,7 @@ void loop() {
       if (T_broadcastTXT > 100000)  checkPing();
     }
     dataUpdateBit = 0;
+    timerSendData = millis();
   }
 
   if (millis() - startTimeESPOn > 5000) {
@@ -251,6 +255,10 @@ void loop() {
     startTimeRelayOn = millis();
   }
 
+  //Периодическая отправка данных по webSocket
+  if (millis() - timerSendData > 2000) {
+    dataUpdateBit = 1;
+  }
 }
 
 

@@ -57,12 +57,28 @@ animation-timing-function: ease-out;
 		to{top:0;}
 	}
 
-	#container p{
+	#container #part1{
+		width: 50px;
+		float: left;
+	}
+	#container #part2{
 		color:#0f6389;
 		font-style:italic;
 		font-size:24px;
-		margin:0 0 10px 0;
-		padding:  4px 0 0 60px;
+		margin: 0 50px 10px 70px;
+		padding: 4px 0 0 0;
+	}
+	#container #part3{
+		width: 20px;
+		float: right;
+		font-size:18px;
+		padding-top: 0px;
+		text-align: center;
+		ztransition: color .2s;
+		color:#B4B4B4;
+	}
+	#container #part3.part3A{
+		color:red;
 	}
 
 	#menu, #menu ul {
@@ -73,7 +89,6 @@ animation-timing-function: ease-out;
 
 	#menu > li {
 		height: 34px;
-
 		float: left;
 		position: relative;
 		perspective: 1000px;
@@ -176,8 +191,8 @@ animation-timing-function: ease-out;
 		padding-top: 12px;
 		width: 45px;
 		height: 23px;
+		position: relative;
 		display: block;
-		position: relative;	
 		transition: all .25s ease-in-out;
 		border-radius: 5px;	
 	}
@@ -201,4 +216,17 @@ animation-timing-function: ease-out;
 	     top: 3px;
 	     width: 100%;
 	     border-top: 2px solid #0f6389;
+	}
+
+
+	#indicator {
+		background: red;
+		top: 30px;
+		padding-top: 12px;
+		width: 45px;
+		height: 23px;
+		position: relative;
+		display: block;
+		//transition: all .25s ease-in-out;
+		//border-radius: 5px;	
 	}
