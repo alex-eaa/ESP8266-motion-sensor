@@ -16,6 +16,7 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <WebSocketsServer.h>
 #include <FS.h>
@@ -110,9 +111,26 @@ void setup() {
     }
   }
 
+  if (!MDNS.begin("esp8266")) {
+    Serial.println("Error setting up MDNS responder!");
+    while (1) {
+      delay(1000);
+    }
+  }
+
   webServer_init();      //инициализация HTTP интерфейса
   webSocket_init();      //инициализация webSocket интерфейса
 
+/*
+  if (!MDNS.begin("esp8266")) {
+    Serial.println("Error setting up MDNS responder!");
+    while (1) {
+      delay(100);
+    }
+  }else{
+      MDNS.addService("http", "tcp", 80);
+  }
+*/
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
 }
