@@ -32,6 +32,7 @@
 #define RELAY_GPIO 16       // пин, выход управления реле
 #define STAT_FILE "/stat.txt"
 #define CONFIG_FILE "/config.txt"
+#define HOST_NAME "esp_link_"
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
@@ -104,33 +105,29 @@ void setup() {
     if (WiFi.SSID() != p_ssid || WiFi.psk() != p_password) {
       Serial.println(F("\nCHANGE password or ssid"));
       WiFi.disconnect();
-      set_staticIP();
       WiFi.begin(p_ssid, p_password);
-    } else {
-      set_staticIP();
     }
+    set_staticIP();
   }
 
-  if (!MDNS.begin("esp8266")) {
-    Serial.println("Error setting up MDNS responder!");
-    while (1) {
-      delay(1000);
-    }
-  }
 
   webServer_init();      //инициализация HTTP интерфейса
   webSocket_init();      //инициализация webSocket интерфейса
 
-/*
-  if (!MDNS.begin("esp8266")) {
+  String mdnsNameStr = HOST_NAME + String(ESP.getChipId(), HEX);
+  char mdnsName[mdnsNameStr.length()];
+  mdnsNameStr.toCharArray(mdnsName, mdnsNameStr.length());
+  Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsName);
+  if (!MDNS.begin(mdnsName)) {
     Serial.println("Error setting up MDNS responder!");
     while (1) {
       delay(100);
     }
-  }else{
-      MDNS.addService("http", "tcp", 80);
+  } else {
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("ws", "tcp", 81);
   }
-*/
+
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
 }
