@@ -17,6 +17,7 @@ bool saveFile(char *filename)
     doc["sensor1Use"] = sensor1Use;
     doc["sensor2Use"] = sensor2Use;
     doc["wifiAP_mode"] = wifiAP_mode;
+    doc["static_IP"] = static_IP;
     doc["p_ssidAP"] = p_ssidAP;
     doc["p_passwordAP"] = p_passwordAP;
     doc["p_ssid"] = p_ssid;
@@ -92,6 +93,7 @@ bool loadFile(char *filename) {
     stemp.toCharArray(p_ssidAP, stemp.length() + 1);
     //Serial.print(F("p_ssidAP="));   Serial.println(p_ssidAP);
 
+    static_IP = doc["static_IP"];    //Serial.println(static_IP);
     ip[0] = doc["ip"][0];    //Serial.println(ip[0]);
     ip[1] = doc["ip"][1];    //Serial.println(ip[1]);
     ip[2] = doc["ip"][2];    //Serial.println(ip[2]);

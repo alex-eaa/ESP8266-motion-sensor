@@ -39,6 +39,7 @@ char *p_ssidAP = "AP";             //SSID-имя вашей сети
 char *p_passwordAP = "12345678";
 char *p_ssid = "lamp";
 char *p_password = "1234567890lamp";
+bool static_IP = 0;
 byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
@@ -107,7 +108,9 @@ void setup() {
       WiFi.disconnect();
       WiFi.begin(p_ssid, p_password);
     }
-    set_staticIP();
+    if (static_IP == 1) {
+      set_staticIP();
+    }
   }
 
 
@@ -259,6 +262,7 @@ void printConfiguration () {
   Serial.print(F("p_passwordAP=")); Serial.println(p_passwordAP);
   Serial.print(F("p_ssid="));       Serial.println(p_ssid);
   Serial.print(F("p_password="));   Serial.println(p_password);
+  Serial.print(F("static_IP="));     Serial.println(static_IP);
   Serial.print(F("ip="));    Serial.print(ip[0]);   Serial.print(":");  Serial.print(ip[1]);  Serial.print(":");  Serial.print(ip[2]);  Serial.print(":");  Serial.println(ip[3]);
   Serial.print(F("sbnt="));  Serial.print(sbnt[0]); Serial.print(":");  Serial.print(sbnt[1]);  Serial.print(":");  Serial.print(sbnt[2]);  Serial.print(":");  Serial.println(sbnt[3]);
   Serial.print(F("gtw="));   Serial.print(gtw[0]);  Serial.print(":");  Serial.print(gtw[1]);  Serial.print(":");  Serial.print(gtw[2]);  Serial.print(":");  Serial.println(gtw[3]);

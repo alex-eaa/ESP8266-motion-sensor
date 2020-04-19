@@ -24,34 +24,36 @@
 
 <div class='content'>
 	<h3>Настройка WiFi</h3>
-	<h4><input type='radio' id='wifiAP_mode_off' name='wifiAP_mode'/> Режим клиента</h4>
+	<h4><input type='radio' id='wifiAP_mode_off' name='wifiAP_mode' onchange='updateDisabledElements()'/> Режим клиента</h4>
 
-	<p>Имя сети: <input type='text' id='p_ssid' name='p_ssid' maxlength='32' value=''/></p>
-	<p>Пароль сети: <input type='text' id='p_password' name='p_password' maxlength='64' value=''/></p>
+	<p>Имя сети: <input type='text' id='p_ssid' maxlength='32' value=''/></p>
+	<p>Пароль сети: <input type='text' id='p_password' maxlength='64' value=''/></p>
+	
+	<p><input type='checkbox' id='static_IP' onchange='updateDisabledElements()'>Статический IP-адрес:</p>
 
-	<p>IP-адрес: <input type='text' size='3' id='ip_0' name='ip_0' maxlength='3' value=''/>
-	:<input type='text' id='ip_1' name='ip_1' size='3' maxlength='3' value=''/>
-	:<input type='text' id='ip_2' name='ip_2' size='3' maxlength='3' value=''/>
-	:<input type='text' id='ip_3' name='ip_3' size='3' maxlength='3' value=''/>
+	<p>IP-адрес: <input type='text' id='ip_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='ip_3' class='staticIP' size='3' maxlength='3' value=''/>
 	</p>
 
-	<p>Маска подсети: <input type='text' size='3' id='sbnt_0' name='sbnt_0' maxlength='3' value=''/>
-	:<input type='text' id='sbnt_1' name='sbnt_1' size='3' maxlength='3' value=''/>
-	:<input type='text' id='sbnt_2' name='sbnt_2' size='3' maxlength='3' value=''/>
-	:<input type='text' id='sbnt_3' name='sbnt_3' size='3' maxlength='3' value=''/>
+	<p>Маска подсети: <input type='text' id='sbnt_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='sbnt_3' class='staticIP' size='3' maxlength='3' value=''/>
 	</p>
 
-	<p>Основной шлюз: <input type='text' size='3' id='gtw_0' name='gtw_0' maxlength='3' value=''/>
-	:<input type='text' id='gtw_1' name='gtw_1' size='3' maxlength='3' value=''/>
-	:<input type='text' id='gtw_2' name='gtw_2' size='3' maxlength='3' value=''/>
-	:<input type='text' id='gtw_3' name='gtw_3' size='3' maxlength='3' value=''/>
+	<p>Основной шлюз: <input type='text' id='gtw_0' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_1' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_2' class='staticIP' size='3' maxlength='3' value=''/>
+	:<input type='text' id='gtw_3' class='staticIP' size='3' maxlength='3' value=''/>
 	</p>
 
 	<hr>
-	<h4><input type='radio' id='wifiAP_mode_on' name='wifiAP_mode'/> Режим точки доступа</h4>
+	<h4><input type='radio' id='wifiAP_mode_on' name='wifiAP_mode' onchange='updateDisabledElements()'/> Режим точки доступа</h4>
 
-	<p>Имя сети: <input type='text' id='p_ssidAP' name='p_ssidAP' maxlength='32' value=''/></p>
-	<p>Пароль сети: <input type='text' id='p_passwordAP' name='p_passwordAP' maxlength='64' value=''/></p>
+	<p>Имя сети: <input type='text' id='p_ssidAP' maxlength='32' value=''/></p>
+	<p>Пароль сети: <input type='text' id='p_passwordAP' maxlength='64' value=''/></p>
 
 	<hr>
 	<p><button onclick="sendData()">Сохранить</button></p>
@@ -69,11 +71,13 @@
 		p_password: "",
 		p_ssidAP: "",
 		p_passwordAP: "",
-		wifiAP_mode: 0
+		wifiAP_mode: 0,
+		static_IP: false
 	};
 
 
 	function updateAllData() {
+		data["static_IP"] = document.getElementById("static_IP").checked;
 		data["ip"][0] = (document.getElementById('ip_0').value);
 		data["ip"][1] = (document.getElementById('ip_1').value);
 		data["ip"][2] = (document.getElementById('ip_2').value);
@@ -96,6 +100,7 @@
 
 
 	function updateAllPage() {
+		document.getElementById('static_IP').checked = data["static_IP"];
 		document.getElementById('ip_0').value = data["ip"][0];
 		document.getElementById('ip_1').value = data["ip"][1]; 
 		document.getElementById('ip_2').value = data["ip"][2]; 
@@ -190,13 +195,39 @@
 						document.getElementById('gtw_2').value = data[x][2]; 
 						document.getElementById('gtw_3').value = data[x][3];
 						break;
+					case 'static_IP':
+						document.getElementById('static_IP').checked = obj[x];
+						break;
 					default:
 						document.getElementById(x).value = obj[x];
 				}
-
 			}
 		}
+		updateDisabledElements();
 	};
+
+
+	function updateDisabledElements() {
+		var elements = document.getElementsByClassName("staticIP");
+		for (let n=0; n<elements.length; n++){
+			if (document.getElementById("static_IP").checked){
+				elements[n].removeAttribute("disabled");
+			}else{
+				elements[n].setAttribute("disabled", "true");
+			}
+		}
+		if (document.getElementById('wifiAP_mode_on').checked){
+			document.getElementById('p_ssid').setAttribute("disabled", "true");
+			document.getElementById('p_password').setAttribute("disabled", "true");
+			document.getElementById('p_ssidAP').removeAttribute("disabled");
+			document.getElementById('p_passwordAP').removeAttribute("disabled");
+		}else{
+			document.getElementById('p_ssid').removeAttribute("disabled");
+			document.getElementById('p_password').removeAttribute("disabled");
+			document.getElementById('p_ssidAP').setAttribute("disabled", "true");
+			document.getElementById('p_passwordAP').setAttribute("disabled", "true");
+		}
+	}
 
 
 </script>
