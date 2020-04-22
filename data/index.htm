@@ -272,7 +272,7 @@
 			</li>
 		</ul>
 	</div>
-	<div id="part3">w</div>
+	<div id="part3">n</div>
 	<div id="part2">Главная</div>
 </div>
 
@@ -409,9 +409,13 @@ function changeDS() {
 
 
 
-	let wsAdress = 'ws://' + location.host + ':81/index.htm';
-	//let wsAdress = 'ws://192.168.43.43:81/index.htm';
-	let connection = new WebSocket(wsAdress, ['arduino']);
+let wsAdress = 'ws://' + location.host + ':81/index.htm';
+//let wsAdress = 'ws://192.168.43.43:81/index.htm';
+let connection = new WebSocket(wsAdress, ['arduino']);
+
+connection.onopen = function(e) {
+  console.log("[open] Соединение установлено");
+};
 
 connection.onerror = function (error) {
 	console.log('WebSocket Error ', error);

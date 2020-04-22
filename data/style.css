@@ -74,11 +74,11 @@ animation-timing-function: ease-out;
 		font-size:18px;
 		padding-top: 0px;
 		text-align: center;
-		ztransition: color .2s;
+		transition: color 0.7s;
 		color:#B4B4B4;
 	}
 	#container #part3.part3A{
-		color:red;
+		color:#0F6389;
 	}
 
 	#menu, #menu ul {

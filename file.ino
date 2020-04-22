@@ -1,7 +1,7 @@
 //Сохранение файлов в формате JSON
 bool saveFile(char *filename)
 {
-  Serial.print(F("Save file: "));   Serial.println(filename);
+  //Serial.print(F("Save file: "));   Serial.println(filename);
   SPIFFS.remove(filename);
 
   File file = SPIFFS.open(filename, "w");
@@ -22,6 +22,7 @@ bool saveFile(char *filename)
     doc["p_passwordAP"] = p_passwordAP;
     doc["p_ssid"] = p_ssid;
     doc["p_password"] = p_password;
+    doc["conIndic"] = conIndic;
     JsonArray ipJsonArray = doc.createNestedArray("ip");
     for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
     JsonArray sbntJsonArray = doc.createNestedArray("sbnt");
@@ -38,10 +39,10 @@ bool saveFile(char *filename)
   if (serializeJson(doc, file) == 0) {
     Serial.print(F("Failed write to file: "));
   } else {
-    Serial.print(F("Save file complited: "));
+    //Serial.print(F("Save file complited: "));
     result = 1;
   }
-  Serial.println(filename);
+  //Serial.println(filename);
   file.close();
   return result;
 }
@@ -49,7 +50,7 @@ bool saveFile(char *filename)
 
 //Чтение из файла в формате JSON
 bool loadFile(char *filename) {
-  Serial.print(F("Load file: "));   Serial.println(filename);
+  //Serial.print(F("Load file: "));   Serial.println(filename);
   File file = SPIFFS.open(filename, "r");
   if (!file) {
     Serial.print(F("Failed read file: "));   Serial.println(filename);
@@ -70,29 +71,24 @@ bool loadFile(char *filename) {
     relayMode = doc["relayMode"];      //Serial.println(relayMode);
     sensor1Use = doc["sensor1Use"];    //Serial.println(sensor1Use);
     sensor2Use = doc["sensor2Use"];    //Serial.println(sensor2Use);
-
     wifiAP_mode = doc["wifiAP_mode"];    //Serial.println(wifiAP_mode);
-
+    conIndic = doc["conIndic"];          //Serial.println(conIndic);
     String stemp = doc["p_ssid"].as<String>();
     p_ssid = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssid, stemp.length() + 1);
     //Serial.print(F("p_ssid="));   Serial.println(p_ssid);
-
     stemp = doc["p_password"].as<String>();
     p_password = new char [stemp.length() + 1];
     stemp.toCharArray(p_password, stemp.length() + 1);
     //Serial.print(F("p_password="));   Serial.println(p_password);
-
     stemp = doc["p_passwordAP"].as<String>();
     p_passwordAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
     //Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
-
     stemp = doc["p_ssidAP"].as<String>();
     p_ssidAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssidAP, stemp.length() + 1);
     //Serial.print(F("p_ssidAP="));   Serial.println(p_ssidAP);
-
     static_IP = doc["static_IP"];    //Serial.println(static_IP);
     ip[0] = doc["ip"][0];    //Serial.println(ip[0]);
     ip[1] = doc["ip"][1];    //Serial.println(ip[1]);
@@ -153,7 +149,7 @@ String formatBytes(size_t bytes)
 
 void scanAllFile()
 {
-  Serial.println("\nScan files:");
+  //Serial.println("\nScan files:");
   Dir dir = SPIFFS.openDir("/");
   while (dir.next()) {
     String fileName = dir.fileName();

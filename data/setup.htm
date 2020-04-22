@@ -21,7 +21,7 @@
 			</li>
 		</ul>
 	</div>
-	<div id="part3">w</div>
+	<div id="part3"></div>
 	<div id="part2">Сетевые настройки</div>
 </div>
 
@@ -62,6 +62,9 @@
 	<p><button onclick="sendData()">Сохранить</button></p>
 	<p><button onclick="sendReset()">Перезагрузить</button></p>
 	<p><button onclick="sendResetStat()">Сброс статистики</button></p>
+	<hr>
+	<h3>Расширенные настройки</h3>
+	<p><input type='checkbox' id='conIndic'>Включить индикатор соединения</p>
 </div>
 
 <script>
@@ -75,11 +78,13 @@
 		p_ssidAP: "",
 		p_passwordAP: "",
 		wifiAP_mode: 0,
-		static_IP: false
+		static_IP: false,
+		conIndic: false
 	};
 
 
 	function updateAllData() {
+		data["conIndic"] = document.getElementById("conIndic").checked;
 		data["static_IP"] = document.getElementById("static_IP").checked;
 		data["ip"][0] = (document.getElementById('ip_0').value);
 		data["ip"][1] = (document.getElementById('ip_1').value);
@@ -103,6 +108,7 @@
 
 
 	function updateAllPage() {
+		document.getElementById('conIndic').checked = data["conIndic"];
 		document.getElementById('static_IP').checked = data["static_IP"];
 		document.getElementById('ip_0').value = data["ip"][0];
 		document.getElementById('ip_1').value = data["ip"][1]; 
@@ -202,6 +208,9 @@
 						break;
 					case 'static_IP':
 						document.getElementById('static_IP').checked = obj[x];
+						break;
+					case 'conIndic':
+						document.getElementById('conIndic').checked = obj[x];
 						break;
 					default:
 						document.getElementById(x).value = obj[x];

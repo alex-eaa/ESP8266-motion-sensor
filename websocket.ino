@@ -42,7 +42,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] get Text: %s\n", num, payload);
 
         if (strcmp((char *)payload, "RESET") == 0)  ESP.reset();
-        else if (strcmp((char *)payload, "RESET_STAT") == 0){
+        else if (strcmp((char *)payload, "RESET_STAT") == 0) {
           SPIFFS.remove(STAT_FILE);
           delay(500);
           ESP.reset();
@@ -93,7 +93,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             gtw[2] = doc["gtw"][2];    //Serial.println(gtw[2]);
             gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
             wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
-            static_IP = doc["static_IP"];    //Serial.println(static_IP);
+            static_IP = doc["static_IP"];      //Serial.println(static_IP);
+            conIndic = doc["conIndic"];        //Serial.println(conIndic);
             saveFile(CONFIG_FILE);
             saveFile(STAT_FILE);
           }
@@ -147,6 +148,7 @@ String serializationToJson_setup()
   for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["static_IP"] = static_IP;
+  doc["conIndic"] = conIndic;
 
   String output = "";
   serializeJson(doc, output);
@@ -156,7 +158,7 @@ String serializationToJson_setup()
 
 // Проверка состояния соединения с websocket-клиентами. Отключение тех с которыми нет связи.
 void checkPing() {
-  //Serial.println("checkPing checkPing checkPing checkPing checkPing");
+  //Serial.println("Start checkPing");
   for (uint8_t nums = 0; nums < 5; nums++) {
     //int timeStart = micros();
     if ( !webSocket.sendPing(nums, ping) )  webSocket.disconnect(nums);

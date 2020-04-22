@@ -32,7 +32,8 @@
 #define RELAY_GPIO 16       // пин, выход управления реле
 #define STAT_FILE "/stat.txt"
 #define CONFIG_FILE "/config.txt"
-#define HOST_NAME "esp_link_"
+#define HOST_NAME "esplink_ms_"
+#define TIME_CON_INDIC 2000   //время периодичности отправки данных для работы индикатора соединения
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
@@ -44,10 +45,13 @@ byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
 
+bool conIndic = 0;  //бит работы индикатора соединения, 1-вкл. 0-откл., данные отправляются каждые 2000 мс
+unsigned int timerCondIndic; //вспом. переменная времени для бит работы индикатора соединения
+
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
 unsigned int speedT = 200;  //период отправки данных, миллисек
-bool dataUpdateBit = 0;
+bool dataUpdateBit = 0;     //бит обновления данных, устанавливается когда данные обновлены и нужно отправить их клиенту
 
 int relayMode = 2;        //режим работы, 0-откл, 1-вкл, 2-авто
 bool relayState = 0;      //состояние реле 0-off, 1-on
@@ -70,8 +74,6 @@ double timeESPOn = 0;                   //время с момента вклю�
 int startTimeESPOn = 0;                 //вспом. для timeESPOn
 unsigned int timeSaveStat = 43200000;   //периодичность сохранения статистики, мс
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
-
-unsigned int timerSendData;
 
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
@@ -129,13 +131,14 @@ void setup() {
       delay(100);
     }
   } else {
-    MDNS.addService("http", "tcp", 80);
+    MDNS.addService("ewelink", "tcp", 80);
     MDNS.addService("ws", "tcp", 81);
   }
 
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
-  timerSendData = millis();
+  timerCondIndic = millis();
+
 }
 
 
@@ -228,7 +231,7 @@ void loop() {
       if (T_broadcastTXT > 100000)  checkPing();
     }
     dataUpdateBit = 0;
-    timerSendData = millis();
+    timerCondIndic = millis();
   }
 
   if (millis() - startTimeESPOn > 5000) {
@@ -255,9 +258,11 @@ void loop() {
     startTimeRelayOn = millis();
   }
 
-  //Периодическая отправка данных по webSocket
-  if (millis() - timerSendData > 2000) {
-    dataUpdateBit = 1;
+  //Периодическая отправка данных по webSocket, для работы индикатора соединения при установленном бите индикатора соединения
+  if (millis() - timerCondIndic > TIME_CON_INDIC) {
+    if (conIndic == 1) {
+      dataUpdateBit = 1;
+    }
   }
 }
 
