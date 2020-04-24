@@ -117,35 +117,21 @@ void setup() {
     }
   }
 
-
   webServer_init();      //инициализация HTTP интерфейса
   webSocket_init();      //инициализация webSocket интерфейса
-
-  String mdnsNameStr = HOST_NAME + String(ESP.getChipId(), HEX);
-  char mdnsName[mdnsNameStr.length()];
-  mdnsNameStr.toCharArray(mdnsName, mdnsNameStr.length());
-  Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsName);
-  if (!MDNS.begin(mdnsName)) {
-    Serial.println("Error setting up MDNS responder!");
-    while (1) {
-      delay(100);
-    }
-  } else {
-    MDNS.addService("ewelink", "tcp", 80);
-    MDNS.addService("ws", "tcp", 81);
-  }
 
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
   timerCondIndic = millis();
-
 }
+
 
 
 void loop() {
   wifi_init();
   webSocket.loop();
   server.handleClient();
+  MDNS.update();
 
   //Обработка состояния сенсоров
   int prevSensorState = sensor1State;
