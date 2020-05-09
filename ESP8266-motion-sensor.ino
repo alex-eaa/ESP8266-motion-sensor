@@ -23,6 +23,7 @@
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <PubSubClient.h>
+#include <Debounce.h>
 
 #define LED_WIFI_GPIO 2     // номер пина светодиода GPIO2 (D4)
 #define LED_RED_GPIO 15     // пин, красного светодиода 
@@ -83,6 +84,8 @@ WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
+Debounce Sensor1(SENSOR1_GPIO);
+Debounce Sensor2(SENSOR2_GPIO);
 
 void setup() {
   Serial.begin(115200);
@@ -90,8 +93,8 @@ void setup() {
   pinMode(LED_WIFI_GPIO, OUTPUT);
   pinMode(LED_GREEN_GPIO, OUTPUT);
   pinMode(BUTTON_GPIO, INPUT_PULLUP);
-  pinMode(SENSOR1_GPIO, INPUT);
-  pinMode(SENSOR2_GPIO, INPUT);
+  pinMode(SENSOR1_GPIO, INPUT_PULLUP);
+  pinMode(SENSOR2_GPIO, INPUT_PULLUP);
   pinMode(RELAY_GPIO, OUTPUT);
   digitalWrite(LED_WIFI_GPIO, HIGH);
   digitalWrite(LED_GREEN_GPIO, LOW);
@@ -152,10 +155,12 @@ void loop() {
 
   //Обработка состояния сенсоров
   int prevSensorState = sensor1State;
-  sensor1State = digitalRead(SENSOR1_GPIO);
+  //sensor1State = digitalRead(SENSOR1_GPIO);
+  sensor1State = Sensor1.read();
   if (prevSensorState != sensor1State)  dataUpdateBit = 1;
   prevSensorState = sensor2State;
-  sensor2State = digitalRead(SENSOR2_GPIO);
+  //sensor2State = digitalRead(SENSOR2_GPIO);
+  sensor2State = Sensor2.read();
   if (prevSensorState != sensor2State)  dataUpdateBit = 1;
 
 
