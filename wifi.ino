@@ -4,8 +4,8 @@
 
 unsigned int wifiConnectTimer = millis();     //перемнная для таймера включения WIFI
 unsigned int ledBlinkTimer = millis();        //перемнная для мигания LED WIFI
-bool wlConnectedMsgSend = 0;
-bool wifiAP_runned = 0;
+bool wlConnectedMsgSend = 0;                  //флаг вывода сообщения о подключении к WIFI
+bool wifiAP_runned = 0;                       //флаг запуска АР
 
 void wifi_init()
 {

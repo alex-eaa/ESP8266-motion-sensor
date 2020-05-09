@@ -21,6 +21,8 @@
 #include <WebSocketsServer.h>
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <StreamUtils.h>
+#include <PubSubClient.h>
 
 #define LED_WIFI_GPIO 2     // номер пина светодиода GPIO2 (D4)
 #define LED_RED_GPIO 15     // пин, красного светодиода 
@@ -33,20 +35,21 @@
 #define STAT_FILE "/stat.txt"
 #define CONFIG_FILE "/config.txt"
 #define HOST_NAME "esplink_ms_"
-#define TIME_CON_INDIC 2000   //время периодичности отправки данных для работы индикатора соединения
+#define TIME_ATTEMP_CON_MQTT 5000   //время между попытками установки соединения с MQTT сервером
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
 char *p_passwordAP = "12345678";
 char *p_ssid = "lamp";
 char *p_password = "1234567890lamp";
+char* mqtt_server = "srv1.mqtt.4api.ru";
+int mqtt_server_port = 9124;
 bool static_IP = 0;
 byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
 
 bool conIndic = 0;  //бит работы индикатора соединения, 1-вкл. 0-откл., данные отправляются каждые 2000 мс
-unsigned int timerCondIndic; //вспом. переменная времени для бит работы индикатора соединения
 
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
@@ -63,7 +66,7 @@ unsigned int delayOff = 20000;     //Задержка отключения, мс
 unsigned int startDelayOff = 0;    //вспом. для delayOff
 
 bool preRelayState;
-bool overfloControl = 0;     //Бит включающий контроль переполнения millis()
+bool overflowControl = 0;     //Бит включающий контроль переполнения millis()
 
 //Statistic variables
 unsigned int numbOn = 0;                //количество включений
@@ -74,9 +77,12 @@ double timeESPOn = 0;                   //время с момента вклю�
 int startTimeESPOn = 0;                 //вспом. для timeESPOn
 unsigned int timeSaveStat = 43200000;   //периодичность сохранения статистики, мс
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
+unsigned int startMqttReconnectTime = 0;  //вспом. для отсчета времени переподключения к mqtt
 
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
 
 void setup() {
   Serial.begin(115200);
@@ -90,7 +96,7 @@ void setup() {
   digitalWrite(LED_WIFI_GPIO, HIGH);
   digitalWrite(LED_GREEN_GPIO, LOW);
   digitalWrite(RELAY_GPIO, 1);
-  //printChipInfo();
+  printChipInfo();
 
   SPIFFS.begin();
   scanAllFile();
@@ -117,12 +123,13 @@ void setup() {
     }
   }
 
-  webServer_init();      //инициализация HTTP интерфейса
-  webSocket_init();      //инициализация webSocket интерфейса
+  webServer_init();      //инициализация HTTP сервера
+  webSocket_init();      //инициализация webSocket сервера
+  mqtt_init();           //инициализация mqtt клиента
 
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
-  timerCondIndic = millis();
+  startMqttReconnectTime = millis();
 }
 
 
@@ -132,6 +139,16 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   MDNS.update();
+
+
+  if (mqtt.connected()) {
+    mqtt.loop();
+    //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 5 сек
+  } else if (!mqtt.connected() && WiFi.status() == WL_CONNECTED && millis() - startMqttReconnectTime > TIME_ATTEMP_CON_MQTT) {
+    reconnect();
+    startMqttReconnectTime = millis();
+  }
+
 
   //Обработка состояния сенсоров
   int prevSensorState = sensor1State;
@@ -192,22 +209,8 @@ void loop() {
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
   if (dataUpdateBit == 1) {
-    if (false) {
-      Serial.print("relayState = ");
-      Serial.println(relayState);
-      Serial.print("sensor1State = ");
-      Serial.println(sensor1State);
-      Serial.print("sensor2State = ");
-      Serial.println(sensor2State);
-      Serial.print("numbOn = ");
-      Serial.println(numbOn);
-      Serial.print("timeRelayOn = ");
-      Serial.println(timeRelayOn);
-      Serial.print("timeESPOn = ");
-      Serial.println(timeESPOn);
-      Serial.print("mdTimeRelayOn = ");
-      Serial.println(millis() - mdTimeRelayOn);
-      Serial.println();
+    if (mqtt.connected()) {
+      sendToMqttServer(serializationToJson_index());
     }
     if (sendSpeedDataEnable[0] || sendSpeedDataEnable[1] || sendSpeedDataEnable[2] || sendSpeedDataEnable[3] || sendSpeedDataEnable[4] ) {
       String data = serializationToJson_index();
@@ -217,9 +220,9 @@ void loop() {
       if (T_broadcastTXT > 100000)  checkPing();
     }
     dataUpdateBit = 0;
-    timerCondIndic = millis();
   }
 
+  //подсчет времени с момента включения устройства
   if (millis() - startTimeESPOn > 5000) {
     timeESPOn += (millis() - startTimeESPOn);
     startTimeESPOn = millis();
@@ -233,23 +236,17 @@ void loop() {
 
   //Контроль переполнения таймера millis
   //Устанавливаем бит контроля переполнения таймера millis, при достижении им 4.200.000.000 из 4.294.967.296
-  if (overfloControl == 0 && millis() > 4200000000) {
-    overfloControl = 1;
+  if (overflowControl == 0 && millis() > 4200000000) {
+    overflowControl = 1;
   }
   //Если произошло переполнение millis
-  if (overfloControl == 1 && millis() > 0 && millis() < 10000) {
-    overfloControl = 0;
+  if (overflowControl == 1 && millis() > 0 && millis() < 10000) {
+    overflowControl = 0;
     startTimeSaveStat = millis();
     startTimeESPOn = millis();
     startTimeRelayOn = millis();
   }
 
-  //Периодическая отправка данных по webSocket, для работы индикатора соединения при установленном бите индикатора соединения
-  if (millis() - timerCondIndic > TIME_CON_INDIC) {
-    if (conIndic == 1) {
-      dataUpdateBit = 1;
-    }
-  }
 }
 
 
@@ -269,11 +266,11 @@ void printConfiguration () {
 
 void printChipInfo() {
   Serial.print(F("\n<-> LAST RESET REASON: "));  Serial.println(ESP.getResetReason());
-  Serial.print(F("<-> ESP8266 CHIP ID: "));      Serial.println(ESP.getChipId());
+  Serial.print(F("<-> ESP8266 CHIP ID: "));      Serial.println(String(ESP.getChipId(), HEX));
   Serial.print(F("<-> CORE VERSION: "));         Serial.println(ESP.getCoreVersion());
   Serial.print(F("<-> SDK VERSION: "));          Serial.println(ESP.getSdkVersion());
   Serial.print(F("<-> CPU FREQ MHz: "));         Serial.println(ESP.getCpuFreqMHz());
-  Serial.print(F("<-> FLASH CHIP ID: "));        Serial.println(ESP.getFlashChipId());
+  Serial.print(F("<-> FLASH CHIP ID: "));        Serial.println(String(ESP.getFlashChipId(), HEX));
   Serial.print(F("<-> FLASH CHIP SIZE: "));      Serial.println(ESP.getFlashChipSize());
   Serial.print(F("<-> FLASH CHIP REAL SIZE: ")); Serial.println(ESP.getFlashChipRealSize());
   Serial.print(F("<-> FLASH CHIP SPEED: "));     Serial.println(ESP.getFlashChipSpeed());
@@ -282,3 +279,23 @@ void printChipInfo() {
   Serial.print(F("<-> FREE SKETCH SIZE: "));     Serial.println(ESP.getFreeSketchSpace());
   Serial.print(F("<-> CYCLE COUNTD: "));         Serial.println(ESP.getCycleCount());
 }
+
+/*
+    if (false) {
+      Serial.print("relayState = ");
+      Serial.println(relayState);
+      Serial.print("sensor1State = ");
+      Serial.println(sensor1State);
+      Serial.print("sensor2State = ");
+      Serial.println(sensor2State);
+      Serial.print("numbOn = ");
+      Serial.println(numbOn);
+      Serial.print("timeRelayOn = ");
+      Serial.println(timeRelayOn);
+      Serial.print("timeESPOn = ");
+      Serial.println(timeESPOn);
+      Serial.print("mdTimeRelayOn = ");
+      Serial.println(millis() - mdTimeRelayOn);
+      Serial.println();
+    }
+ */

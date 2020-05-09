@@ -25,29 +25,26 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
         if (strcmp((char *)payload, "/index.htm") == 0) {
           sendSpeedDataEnable[num] = 1;
-          String data = serializationToJson_index();
-          Serial.println(data);
-          webSocket.sendTXT(num, data);
+          sendToWsClient(num, serializationToJson_index());
         } else if (strcmp((char *)payload, "/setup.htm") == 0) {
           sendSpeedDataEnable[num] = 0;
-          String data = serializationToJson_setup();
-          Serial.println(data);
-          webSocket.sendTXT(num, data);
+          sendToWsClient(num, serializationToJson_setup());
         }
         break;
       }
 
     case WStype_TEXT:
       {
-        Serial.printf("[%u] get Text: %s\n", num, payload);
+        Serial.printf("[%u] get from WS: %s\n", num, payload);
 
-        if (strcmp((char *)payload, "RESET") == 0)  ESP.reset();
-        else if (strcmp((char *)payload, "RESET_STAT") == 0) {
+        if (strcmp((char *)payload, "RESET") == 0) {
+          ESP.reset();
+        }
+        else if (strcmp((char *)payload, "RESETSTAT") == 0) {
           SPIFFS.remove(STAT_FILE);
           delay(500);
           ESP.reset();
         }
-        //else if (strcmp((char *)payload, "on") == 0)   sensor1Use = 1;
         else {
           DynamicJsonDocument doc(1024);
           DeserializationError error = deserializeJson(doc, payload);
@@ -61,8 +58,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1State);
             sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2State);
             dataUpdateBit = 1;
-            saveFile(CONFIG_FILE);
-            saveFile(STAT_FILE);
+            //saveFile(CONFIG_FILE);
+            //saveFile(STAT_FILE);
+            //sendToWsClient(num, serializationToJson_index());
           }
           else if (doc["page"].as<String>() == "setup") {
             String stemp = doc["p_ssid"].as<String>();
@@ -95,8 +93,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
             static_IP = doc["static_IP"];      //Serial.println(static_IP);
             conIndic = doc["conIndic"];        //Serial.println(conIndic);
-            saveFile(CONFIG_FILE);
-            saveFile(STAT_FILE);
+            //saveFile(CONFIG_FILE);
+            //saveFile(STAT_FILE);
+            sendToWsClient(num, serializationToJson_setup());
           }
         }
         break;
@@ -110,6 +109,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       break;
   }
 
+}
+
+
+void sendToWsClient(int num, String json) {
+  String data = serializationToJson_index();
+  //Serial.println(json);
+  webSocket.sendTXT(num, json);
 }
 
 

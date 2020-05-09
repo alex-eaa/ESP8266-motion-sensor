@@ -74,7 +74,7 @@ animation-timing-function: ease-out;
 		font-size:18px;
 		padding-top: 0px;
 		text-align: center;
-		transition: color 0.7s;
+		transition: color 1s;
 		color:#B4B4B4;
 	}
 	#container #part3.part3A{
@@ -216,17 +216,4 @@ animation-timing-function: ease-out;
 	     top: 3px;
 	     width: 100%;
 	     border-top: 2px solid #0f6389;
-	}
-
-
-	#indicator {
-		background: red;
-		top: 30px;
-		padding-top: 12px;
-		width: 45px;
-		height: 23px;
-		position: relative;
-		display: block;
-		//transition: all .25s ease-in-out;
-		//border-radius: 5px;	
 	}

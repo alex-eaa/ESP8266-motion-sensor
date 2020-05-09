@@ -4,12 +4,6 @@ bool saveFile(char *filename)
   //Serial.print(F("Save file: "));   Serial.println(filename);
   SPIFFS.remove(filename);
 
-  File file = SPIFFS.open(filename, "w");
-  if (!file) {
-    Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
-    return 0;
-  }
-
   DynamicJsonDocument doc(1024);
   if (filename == CONFIG_FILE) {
     doc["delayOff"] = delayOff;
@@ -34,17 +28,17 @@ bool saveFile(char *filename)
     doc["timeRelayOn"] = timeRelayOn;
   }
 
-  // Serialize JSON to file
-  bool result = 0;
-  if (serializeJson(doc, file) == 0) {
-    Serial.print(F("Failed write to file: "));
-  } else {
-    //Serial.print(F("Save file complited: "));
-    result = 1;
+  File file = SPIFFS.open(filename, "w");
+  if (!file) {
+    Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
+    return 0;
   }
-  //Serial.println(filename);
+  bool rezSerialization = serializeJson (doc, file);
   file.close();
-  return result;
+
+  if (rezSerialization == 0)  Serial.print(F("Failed write to file: "));
+  else   //Serial.print(F("Save file complited: "));
+  return rezSerialization;
 }
 
 
@@ -58,6 +52,7 @@ bool loadFile(char *filename) {
   }
 
   DynamicJsonDocument doc(1024);
+  //ReadBufferingStream bufferedFile {file, 64 };
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
     Serial.print(F("Failed deserialization file: "));   Serial.println(filename);

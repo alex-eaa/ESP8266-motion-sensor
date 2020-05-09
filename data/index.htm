@@ -5,6 +5,7 @@
 	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
 	<title>Главная</title>
 	<link rel='stylesheet' href='style.css'>	
+	<script src="mqttws31.min.js" type="text/javascript"></script>
 	<style type="text/css">
 
 		h1 {font-size:4em;}
@@ -272,7 +273,7 @@
 			</li>
 		</ul>
 	</div>
-	<div id="part3">n</div>
+	<div id="part3"></div>
 	<div id="part2">Главная</div>
 </div>
 
@@ -307,26 +308,26 @@
 	<div class="flex-item">
 		<h3>Режим<br />работы</h3>
 		<label>
-			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
+			<input type="radio" class="option-input radio" name="relayMode" onchange="startSendData('JSON')"/>
 			ОТКЛ
 		</label>
 		<label>
-			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
+			<input type="radio" class="option-input radio" name="relayMode" onchange="startSendData('JSON')"/>
 			ВКЛ
 		</label>
 		<label>
-			<input type="radio" class="option-input radio" name="relayMode" onchange="changeDS()"/>
+			<input type="radio" class="option-input radio" name="relayMode" onchange="startSendData('JSON')"/>
 			АВТО
 		</label>
 		</div>
   	<div class="flex-item">
   		<h3>Задействовать<br />датчики</h3>
 		<label>
-    		<input type="checkbox" id="sensor1Use"  class="option-input checkbox" onchange="changeDS()"/>
+    		<input type="checkbox" id="sensor1Use"  class="option-input checkbox" onchange="startSendData('JSON')"/>
     		Датчик 1
   		</label>
 		<label>
-			<input type="checkbox" id="sensor2Use" class="option-input checkbox" onchange="changeDS()"/>
+			<input type="checkbox" id="sensor2Use" class="option-input checkbox" onchange="startSendData('JSON')"/>
 		  	Датчик 2
 		</label>
   	</div>
@@ -335,7 +336,7 @@
 <hr>
 	<div>
 		<label for="delayOff">Задержка отключения, сек </label>
-		<input type="number" id="delayOff" onchange="changeDS()" value="0">
+		<input type="number" id="delayOff" onchange="startSendData('JSON')" value="0">
 	</div>
 </div>
 
@@ -351,6 +352,7 @@
 
 
 <script>
+//Скрипт для приложения
 let dataSend = {
 	page: "index",
 	relayMode: 2,
@@ -384,7 +386,7 @@ function updateAllPage() {
 	document.getElementById("timeESPOn").innerHTML = Math.round(data["timeESPOn"]/1000);
 };
 
-function updateDataSend() {
+function updateDataForSend() {
 	dataSend["delayOff"] = document.getElementById("delayOff").value*1000;
 	dataSend["sensor1Use"] = document.getElementById("sensor1Use").checked;
 	dataSend["sensor2Use"] = document.getElementById("sensor2Use").checked;
@@ -394,48 +396,186 @@ function updateDataSend() {
         	dataSend["relayMode"] = i;
         }
     }
-    //console.log('dataSend = ', dataSend);
-};
-
-function sendData () {
-	console.log('TO Server: ', JSON.stringify( dataSend ));
-	if (connection) connection.send(JSON.stringify( dataSend ));
-};
-
-function changeDS() {
-	updateDataSend();
-	sendData();
 };
 
 
+function startSendData(command) {
+	switch (command) {
+		case "JSON":
+			updateDataForSend();
+			sendFinishData(JSON.stringify(dataSend));
+			break;
+		case "INDEX":
+			sendFinishData('INDEX');
+			break;
+		case "SETUP":
+			sendFinishData('SETUP');
+			break;
+		case "RESET":
+			sendFinishData('RESET');
+			break;
+		case "RESETSTAT":
+			sendFinishData('RESETSTAT');
+			break;
+	}
 
-let wsAdress = 'ws://' + location.host + ':81/index.htm';
-//let wsAdress = 'ws://192.168.43.43:81/index.htm';
-let connection = new WebSocket(wsAdress, ['arduino']);
-
-connection.onopen = function(e) {
-  console.log("[open] Соединение установлено");
-};
-
-connection.onerror = function (error) {
-	console.log('WebSocket Error ', error);
-	alert("Ошибка " + error.message);
-};
-
-connection.onmessage = function (e) {
-	console.log('FROM Server: ', e.data);
-	let obj = JSON.parse(e.data);
-	for (x in obj) {
-		if ( data[x]  != null ) {
-			data[x] = obj[x];
-		} else if ( dataSend[x]  != null ) {
-			dataSend[x] = obj[x];
+	function sendFinishData(dat){
+		if (wsState==1){
+			console.log('WS TO Server: ', dat);
+			ws.send(dat);
+			document.getElementById("part3").classList.remove("part3A");
+		}else if (mqttState==1){
+			if (mqtt){
+				console.log('MQTT TO Server: ', dat);
+				//msg = new Paho.MQTT.Message(dat);
+				//msg.destinationName = mqttPrefix+"/"+mqttDevName+"/fromClient";
+				let topic = mqttPrefix+"/"+mqttDevName+"/fromClient";
+				let qos = 2;
+				let retained = false;
+				mqtt.send(topic, dat, qos, retained);
+			}else{
+				console.log('MQTT server not available!');
+			}			
+			document.getElementById("part3").classList.remove("part3A");
 		}
 	}
-	updateAllPage();
-	document.getElementById("part3").classList.toggle("part3A");
+
 };
 
+
+
+var mqttServer="srv1.mqtt.4api.ru";
+var mqttPort=9123;
+var mqttUser="user_889afb72";
+var mqttPass="pass_7c9ca39a";
+var mqttPrefix="user_889afb72";
+var mqttDevName="esplink_ms_1adffc";
+
+var mqttState = 0;
+var wsState = 0;
+
+
+mqtt = new Paho.MQTT.Client(mqttServer, Number(mqttPort), "");
+mqtt.onConnectionLost = onConnectionLost;
+mqtt.onMessageArrived = onMessageArrived;
+
+function mqttConnect() {
+	mqtt.connect({onSuccess:onConnect,
+		onFailure:onFailure, 
+		onSuccess:onSuccess, 
+		userName:mqttUser, 
+		password:mqttPass});
+}
+
+function onConnect() {
+	console.log("MQTT onConnect");
+};
+
+function onSuccess() {
+	console.log("MQTT onSuccess");
+	mqtt.subscribe(mqttPrefix+"/"+mqttDevName+"/fromDevice");
+	mqttState=1;
+	startSendData("INDEX");
+};
+
+function onFailure() {
+	console.log("MQTT onFailure");
+	mqttState=0;
+};
+
+function onConnectionLost(responseObject) {
+	if (responseObject.errorCode !== 0)
+		console.log("MQTT onConnectionLost:"+responseObject.errorMessage);
+	mqttState=0;
+};
+
+function onMessageArrived(message) {
+	console.log("MQTT FROM Server:"+message.payloadString);
+	receivedDataProcessing (message.payloadString);
+};
+
+
+
+
+function wsConnect(wsIP) {
+	let wsAdress = 'ws://'+wsIP+':81/index.htm';
+	ws = new WebSocket(wsAdress, ['arduino']);
+	
+	ws.onopen = function(e) {
+  		console.log("WS onConnected");
+  		wsState = 1;
+  	};
+
+	ws.onclose = function(e) {
+		wsState = 0;
+		console.log('WS is closed.', e.reason);
+	};
+
+	ws.onerror = function (error) {
+		wsState = 0;
+		console.log('WS ERROR. Reconnect will be attempted in 10 second.');
+		setTimeout(function() {
+	      wsConnect(wsIP);
+	    }, 10000);
+	};
+
+	ws.onmessage = function (e) {
+		console.log('WS FROM Server: ', e.data);
+		receivedDataProcessing (e.data);
+	};
+}
+
+
+
+
+function startConControl(ip){
+	console.log('ip = ', ip);
+	changeIndic();
+
+	if (ip!=null)   wsConnect(ip);
+
+	setInterval(function() {
+		changeIndic();
+		if (mqttState==1 && wsState==1){
+			mqtt.disconnect();
+			mqttState=0;
+			console.log('mqtt.disconnect()');
+		}
+		if (mqttState==0 && wsState==0){
+			mqttConnect();
+			console.log('mqttConnect()');
+		}
+	}, 2000);
+
+	function changeIndic(){
+		if (wsState==1 && mqttState==0) document.getElementById("part3").innerHTML = "n";
+		else if (wsState==0 && mqttState==1) document.getElementById("part3").innerHTML = "w";
+		else document.getElementById("part3").innerHTML = "-";
+	}
+}
+
+
+startConControl('192.168.43.159');
+//startConControl();
+
+
+
+function receivedDataProcessing(strJson){
+	try {
+		let obj = JSON.parse(strJson);
+		for (x in obj) {
+			if ( data[x]  != null ) {
+				data[x] = obj[x];
+			} else if ( dataSend[x]  != null ) {
+				dataSend[x] = obj[x];
+			}
+		}
+		updateAllPage();
+		document.getElementById("part3").classList.add("part3A");
+	} catch (e) {
+		console.log(e.message); 
+	}
+}
 
 
 </script>

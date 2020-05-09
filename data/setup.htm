@@ -5,6 +5,7 @@
 	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
 	<title>Настройка сети</title>
 	<link rel='stylesheet' href='style.css'>
+	<script src="mqttws31.min.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -66,190 +67,303 @@
 </div>
 
 <div class="content">
-	<p><button onclick="sendData()">Сохранить</button></p>
-	<p><button onclick="sendReset()">Перезагрузить</button></p>
-	<p><button onclick="sendResetStat()">Сброс статистики</button></p>
+	<p><button onclick="butSendData()">Сохранить</button></p>
+	<p><button onclick="butSendReset()">Перезагрузить</button></p>
+	<p><button onclick="butSendResetStat()">Сброс статистики</button></p>
 </div>
 
 <script>
-	let data = {
-		page: "setup",
-		ip: new Array(),
-		sbnt: new Array(),
-		gtw: new Array(),
-		p_ssid: "",
-		p_password: "",
-		p_ssidAP: "",
-		p_passwordAP: "",
-		wifiAP_mode: 0,
-		static_IP: false,
-		conIndic: false
-	};
+let data = {
+	page: "setup",
+	ip: new Array(),
+	sbnt: new Array(),
+	gtw: new Array(),
+	p_ssid: "",
+	p_password: "",
+	p_ssidAP: "",
+	p_passwordAP: "",
+	wifiAP_mode: 0,
+	static_IP: false,
+	conIndic: false
+};
 
 
-	function updateAllData() {
-		data["conIndic"] = document.getElementById("conIndic").checked;
-		data["static_IP"] = document.getElementById("static_IP").checked;
-		data["ip"][0] = (document.getElementById('ip_0').value);
-		data["ip"][1] = (document.getElementById('ip_1').value);
-		data["ip"][2] = (document.getElementById('ip_2').value);
-		data["ip"][3] = (document.getElementById('ip_3').value);
-		data["sbnt"][0] = (document.getElementById('sbnt_0').value);
-		data["sbnt"][1] = (document.getElementById('sbnt_1').value);
-		data["sbnt"][2] = (document.getElementById('sbnt_2').value);
-		data["sbnt"][3] = (document.getElementById('sbnt_3').value);
-		data["gtw"][0] = (document.getElementById('gtw_0').value);
-		data["gtw"][1] = (document.getElementById('gtw_1').value);
-		data["gtw"][2] = (document.getElementById('gtw_2').value);
-		data["gtw"][3] = (document.getElementById('gtw_3').value);
-		data["p_ssid"] = document.getElementById("p_ssid").value;
-		data["p_password"] = document.getElementById("p_password").value;
-		data["p_ssidAP"] = document.getElementById("p_ssidAP").value;
-		data["p_passwordAP"] = document.getElementById("p_passwordAP").value;
-		if (document.getElementById('wifiAP_mode_on').checked == true)   data["wifiAP_mode"] = true;
-		else  data["wifiAP_mode"] = false;
-	};
+function updateDataForSend() {
+	data["conIndic"] = document.getElementById("conIndic").checked;
+	data["static_IP"] = document.getElementById("static_IP").checked;
+	data["ip"][0] = (document.getElementById('ip_0').value);
+	data["ip"][1] = (document.getElementById('ip_1').value);
+	data["ip"][2] = (document.getElementById('ip_2').value);
+	data["ip"][3] = (document.getElementById('ip_3').value);
+	data["sbnt"][0] = (document.getElementById('sbnt_0').value);
+	data["sbnt"][1] = (document.getElementById('sbnt_1').value);
+	data["sbnt"][2] = (document.getElementById('sbnt_2').value);
+	data["sbnt"][3] = (document.getElementById('sbnt_3').value);
+	data["gtw"][0] = (document.getElementById('gtw_0').value);
+	data["gtw"][1] = (document.getElementById('gtw_1').value);
+	data["gtw"][2] = (document.getElementById('gtw_2').value);
+	data["gtw"][3] = (document.getElementById('gtw_3').value);
+	data["p_ssid"] = document.getElementById("p_ssid").value;
+	data["p_password"] = document.getElementById("p_password").value;
+	data["p_ssidAP"] = document.getElementById("p_ssidAP").value;
+	data["p_passwordAP"] = document.getElementById("p_passwordAP").value;
+	if (document.getElementById('wifiAP_mode_on').checked == true)   data["wifiAP_mode"] = true;
+	else  data["wifiAP_mode"] = false;
+};
 
 
-	function updateAllPage() {
-		document.getElementById('conIndic').checked = data["conIndic"];
-		document.getElementById('static_IP').checked = data["static_IP"];
-		document.getElementById('ip_0').value = data["ip"][0];
-		document.getElementById('ip_1').value = data["ip"][1]; 
-		document.getElementById('ip_2').value = data["ip"][2]; 
-		document.getElementById('ip_3').value = data["ip"][3];
-		document.getElementById('sbnt_0').value = data["sbnt"][0];
-		document.getElementById('sbnt_1').value = data["sbnt"][1];
-		document.getElementById('sbnt_2').value = data["sbnt"][2];
-		document.getElementById('sbnt_3').value = data["sbnt"][3];
-		document.getElementById('gtw_0').value = data["gtw"][0];
-		document.getElementById('gtw_1').value = data["gtw"][1]; 
-		document.getElementById('gtw_2').value = data["gtw"][2]; 
-		document.getElementById('gtw_3').value = data["gtw"][3];
-		if (data["wifiAP_mode"]==true) {
-			document.getElementById('wifiAP_mode_on').checked = true;
-			document.getElementById('wifiAP_mode_off').checked = false;
-		} else {
-			document.getElementById('wifiAP_mode_on').checked = false;
-			document.getElementById('wifiAP_mode_off').checked = true;	
-		}
-		document.getElementById('p_ssid').value = data["p_ssid"];
-		document.getElementById('p_password').value = data["p_password"];
-		document.getElementById('p_ssidAP').value = data["p_ssidAP"];
-		document.getElementById('p_passwordAP').value = data["p_passwordAP"];
-	};
-
-	function sendData () {
-		updateAllData();
-		console.log('TO Server: ', JSON.stringify( data ));
-		connection.send(JSON.stringify( data ));
-	};
-
-	function sendReset () {
-		if (confirm("Вы хотите перезагрузить устройство?")) {
-			let msg = 'RESET';
-			console.log('TO Server: ', msg);
-			connection.send(msg);
-		}
-	};
-
-	function sendResetStat () {
-		if (confirm("Вы подтверждаете сброс статистики? После сброса информацию невозможно будет восстановить")) {
-			let msg = 'RESET_STAT';
-			console.log('TO Server: ', msg);
-			connection.send(msg);
-		}
-	};
+function updateAllPage() {
+	document.getElementById('conIndic').checked = data["conIndic"];
+	document.getElementById('static_IP').checked = data["static_IP"];
+	document.getElementById('ip_0').value = data["ip"][0];
+	document.getElementById('ip_1').value = data["ip"][1]; 
+	document.getElementById('ip_2').value = data["ip"][2]; 
+	document.getElementById('ip_3').value = data["ip"][3];
+	document.getElementById('sbnt_0').value = data["sbnt"][0];
+	document.getElementById('sbnt_1').value = data["sbnt"][1];
+	document.getElementById('sbnt_2').value = data["sbnt"][2];
+	document.getElementById('sbnt_3').value = data["sbnt"][3];
+	document.getElementById('gtw_0').value = data["gtw"][0];
+	document.getElementById('gtw_1').value = data["gtw"][1]; 
+	document.getElementById('gtw_2').value = data["gtw"][2]; 
+	document.getElementById('gtw_3').value = data["gtw"][3];
+	if (data["wifiAP_mode"]==true) {
+		document.getElementById('wifiAP_mode_on').checked = true;
+		document.getElementById('wifiAP_mode_off').checked = false;
+	} else {
+		document.getElementById('wifiAP_mode_on').checked = false;
+		document.getElementById('wifiAP_mode_off').checked = true;	
+	}
+	document.getElementById('p_ssid').value = data["p_ssid"];
+	document.getElementById('p_password').value = data["p_password"];
+	document.getElementById('p_ssidAP').value = data["p_ssidAP"];
+	document.getElementById('p_passwordAP').value = data["p_passwordAP"];
+	updateDisabledElements();
+};
 
 
-	let wsAdress = 'ws://' + location.host + ':81/setup.htm';
-	//let wsAdress = 'ws://192.168.43.43:81/setup.htm';
-	let connection = new WebSocket(wsAdress, ['arduino']);
-	console.log(connection);
-	
-	connection.onopen = function () {
-		//connection.send('ping');
-	};
+function butSendData () {
+	updateDataForSend();
+	startSendData("JSON");
+};
 
-	connection.onerror = function (error) {
-		console.log('WebSocket Error ', error);
-		alert("Ошибка " + error.message);
-	};
+function butSendReset () {
+	if (confirm("Вы хотите перезагрузить устройство?")) {
+		startSendData("RESET");
+	}
+};
 
-	connection.onmessage = function (e) {
-		console.log('FROM Server: ', e.data);
-		let obj = JSON.parse(e.data);
-		for (x in obj) {
-			if ( data[x]  != null ) {
-				data[x] = obj[x];
-				switch (x) {
-					case 'wifiAP_mode':
-						if (data[x]==true) {
-							document.getElementById('wifiAP_mode_on').checked = true;
-							document.getElementById('wifiAP_mode_off').checked = false;
-						} else {
-							document.getElementById('wifiAP_mode_on').checked = false;
-							document.getElementById('wifiAP_mode_off').checked = true;	
-						}
-						break;
-					case 'ip':
-						document.getElementById('ip_0').value = data[x][0];
-						document.getElementById('ip_1').value = data[x][1]; 
-						document.getElementById('ip_2').value = data[x][2]; 
-						document.getElementById('ip_3').value = data[x][3];
-						break;
-					case 'sbnt':
-						document.getElementById('sbnt_0').value = data[x][0];
-						document.getElementById('sbnt_1').value = data[x][1]; 
-						document.getElementById('sbnt_2').value = data[x][2]; 
-						document.getElementById('sbnt_3').value = data[x][3];
-						break;
-					case 'gtw':
-						document.getElementById('gtw_0').value = data[x][0];
-						document.getElementById('gtw_1').value = data[x][1]; 
-						document.getElementById('gtw_2').value = data[x][2]; 
-						document.getElementById('gtw_3').value = data[x][3];
-						break;
-					case 'static_IP':
-						document.getElementById('static_IP').checked = obj[x];
-						break;
-					case 'conIndic':
-						document.getElementById('conIndic').checked = obj[x];
-						break;
-					default:
-						document.getElementById(x).value = obj[x];
-				}
-			}
-		}
-		updateDisabledElements();
-		document.getElementById("part3").classList.toggle("part3A");
-	};
+function butSendResetStat () {
+	if (confirm("Вы подтверждаете сброс статистики? После сброса информацию невозможно будет восстановить")) {
+		startSendData("RESETSTAT");
+	}
+};
 
 
-	function updateDisabledElements() {
-		var elements = document.getElementsByClassName("staticIP");
-		for (let n=0; n<elements.length; n++){
-			if (document.getElementById("static_IP").checked){
-				elements[n].removeAttribute("disabled");
+
+function startSendData(command) {
+	switch (command) {
+		case "JSON":
+			updateDataForSend();
+			sendFinishData(JSON.stringify(data));
+			break;
+		case "INDEX":
+			sendFinishData('INDEX');
+			break;
+		case "SETUP":
+			sendFinishData('SETUP');
+			break;
+		case "RESET":
+			sendFinishData('RESET');
+			break;
+		case "RESETSTAT":
+			sendFinishData('RESETSTAT');
+			break;
+	}
+
+	function sendFinishData(dat){
+		if (wsState==1){
+			console.log('WS TO Server: ', dat);
+			ws.send(dat);
+			document.getElementById("part3").classList.remove("part3A");
+		}else if (mqttState==1){
+			if (mqtt){
+				console.log('MQTT TO Server: ', dat);
+				//msg = new Paho.MQTT.Message(dat);
+				//msg.destinationName = mqttPrefix+"/"+mqttDevName+"/fromClient";
+				let topic = mqttPrefix+"/"+mqttDevName+"/fromClient";
+				let qos = 0;
+				let retained = false;
+				mqtt.send(topic, dat, qos, retained);
 			}else{
-				elements[n].setAttribute("disabled", "true");
-			}
-		}
-		if (document.getElementById('wifiAP_mode_on').checked){
-			document.getElementById('p_ssid').setAttribute("disabled", "true");
-			document.getElementById('p_password').setAttribute("disabled", "true");
-			document.getElementById('p_ssidAP').removeAttribute("disabled");
-			document.getElementById('p_passwordAP').removeAttribute("disabled");
-		}else{
-			document.getElementById('p_ssid').removeAttribute("disabled");
-			document.getElementById('p_password').removeAttribute("disabled");
-			document.getElementById('p_ssidAP').setAttribute("disabled", "true");
-			document.getElementById('p_passwordAP').setAttribute("disabled", "true");
+				console.log('MQTT server not available!');
+			}			
+			document.getElementById("part3").classList.remove("part3A");
 		}
 	}
 
+};
+
+
+
+
+var mqttServer="srv1.mqtt.4api.ru";
+var mqttPort=9123;
+var mqttUser="user_889afb72";
+var mqttPass="pass_7c9ca39a";
+var mqttPrefix="user_889afb72";
+var mqttDevName="esplink_ms_1adffc";
+
+var mqttState = 0;
+var wsState = 0;
+
+
+mqtt = new Paho.MQTT.Client(mqttServer, Number(mqttPort), "");
+mqtt.onConnectionLost = onConnectionLost;
+mqtt.onMessageArrived = onMessageArrived;
+
+function mqttConnect() {
+	mqtt.connect({onSuccess:onConnect,
+		onFailure:onFailure, 
+		onSuccess:onSuccess, 
+		userName:mqttUser, 
+		password:mqttPass});
+}
+
+function onConnect() {
+	console.log("MQTT onConnect");
+};
+
+function onSuccess() {
+	console.log("MQTT onSuccess");
+	mqtt.subscribe(mqttPrefix+"/"+mqttDevName+"/fromDevice");
+	mqttState=1;
+	startSendData("SETUP");
+};
+
+function onFailure() {
+	console.log("MQTT onFailure");
+	mqttState=0;
+};
+
+function onConnectionLost(responseObject) {
+	if (responseObject.errorCode !== 0)
+		console.log("MQTT onConnectionLost:"+responseObject.errorMessage);
+	mqttState=0;
+};
+
+function onMessageArrived(message) {
+	console.log("MQTT FROM Server:"+message.payloadString);
+	receivedDataProcessing (message.payloadString);
+};
+
+
+
+
+function wsConnect(wsIP) {
+	let wsAdress = 'ws://'+wsIP+':81/setup.htm';
+	ws = new WebSocket(wsAdress, ['arduino']);
+	
+	ws.onopen = function(e) {
+  		console.log("WS onConnected");
+  		wsState = 1;
+  	};
+
+	ws.onclose = function(e) {
+		wsState = 0;
+		console.log('WS is closed.', e.reason);
+	};
+
+	ws.onerror = function (error) {
+		wsState = 0;
+		console.log('WS ERROR. Reconnect will be attempted in 10 second.');
+		setTimeout(function() {
+	      wsConnect(wsIP);
+	    }, 10000);
+	};
+
+	ws.onmessage = function (e) {
+		console.log('WS FROM Server: ', e.data);
+		receivedDataProcessing (e.data);
+	};
+}
+
+
+
+
+function startConControl(ip){
+	console.log('ip = ', ip);
+	changeIndic();
+
+	if (ip!=null)   wsConnect(ip);
+
+	setInterval(function() {
+		changeIndic();
+		if (mqttState==1 && wsState==1){
+			mqtt.disconnect();
+			mqttState=0;
+			console.log('mqtt.disconnect()');
+		}
+		if (mqttState==0 && wsState==0){
+			mqttConnect();
+			console.log('mqttConnect()');
+		}
+	}, 2000);
+
+	function changeIndic(){
+		if (wsState==1 && mqttState==0) document.getElementById("part3").innerHTML = "n";
+		else if (wsState==0 && mqttState==1) document.getElementById("part3").innerHTML = "w";
+		else document.getElementById("part3").innerHTML = "-";
+	}
+}
+
+
+startConControl('192.168.43.159');
+//startConControl();
+
+
+
+
+function receivedDataProcessing(strJson){
+	try {
+		let obj = JSON.parse(strJson);
+		for (x in obj) {
+			if ( data[x]  != null ) {
+				data[x] = obj[x];
+			}
+		}
+		updateAllPage();
+		document.getElementById("part3").classList.add("part3A");
+	} catch (e) {
+		console.log(e.message); 
+	}
+}
+
+
+
+function updateDisabledElements() {
+	var elements = document.getElementsByClassName("staticIP");
+	for (let n=0; n<elements.length; n++){
+		if (document.getElementById("static_IP").checked){
+			elements[n].removeAttribute("disabled");
+		}else{
+			elements[n].setAttribute("disabled", "true");
+		}
+	}
+	if (document.getElementById('wifiAP_mode_on').checked){
+		document.getElementById('p_ssid').setAttribute("disabled", "true");
+		document.getElementById('p_password').setAttribute("disabled", "true");
+		document.getElementById('p_ssidAP').removeAttribute("disabled");
+		document.getElementById('p_passwordAP').removeAttribute("disabled");
+	}else{
+		document.getElementById('p_ssid').removeAttribute("disabled");
+		document.getElementById('p_password').removeAttribute("disabled");
+		document.getElementById('p_ssidAP').setAttribute("disabled", "true");
+		document.getElementById('p_passwordAP').setAttribute("disabled", "true");
+	}
+}
+
 
 </script>
-
 </body>
 </html>
