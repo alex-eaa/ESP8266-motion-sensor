@@ -52,8 +52,8 @@ void deserealizationFromJson(String json) {
     relayMode = doc["relayMode"];        //Serial.println(relayMode);
     sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1Use);
     sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2Use);
-    //saveFile(CONFIG_FILE);
-    //saveFile(STAT_FILE);
+    saveFile(CONFIG_FILE);
+    saveFile(STAT_FILE);
     dataUpdateBit = 1;
   }
   else if (doc["page"].as<String>() == "setup") {
@@ -87,10 +87,8 @@ void deserealizationFromJson(String json) {
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
     conIndic = doc["conIndic"];        //Serial.println(conIndic);
-    //saveFile(CONFIG_FILE);
-    //saveFile(STAT_FILE);
+    saveFile(CONFIG_FILE);
+    saveFile(STAT_FILE);
     sendToMqttServer(serializationToJson_setup());
   }
 }
-
-

@@ -68,14 +68,14 @@ void set_staticIP()
   IPAddress ipAdr(ip[0], ip[1], ip[2], ip[3]);
   IPAddress gateway(gtw[0], gtw[1], gtw[2], gtw[3]);
   IPAddress subnet(sbnt[0], sbnt[1], sbnt[2], sbnt[3]);
-  WiFi.config(ipAdr, gateway, subnet);
+  WiFi.config(ipAdr, gateway, gateway, subnet);  //второй параметр установка DNS
   Serial.println(F("Set static ip, sbnt, gtw."));
 }
 
 
 
 void startMSDN() {
-  String mdnsNameStr = HOST_NAME + String(ESP.getChipId(), HEX);
+  String mdnsNameStr = DEVICE_TYPE + String(ESP.getChipId(), HEX);
   //Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsNameStr);
   char mdnsName[mdnsNameStr.length()];
   mdnsNameStr.toCharArray(mdnsName, mdnsNameStr.length() + 1);

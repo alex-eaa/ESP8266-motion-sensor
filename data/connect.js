@@ -1,3 +1,5 @@
+var deviceIp="";
+
 var mqttServer="srv1.mqtt.4api.ru";
 var mqttPort=9123;
 var mqttUser="user_889afb72";
@@ -53,6 +55,7 @@ function onMessageArrived(message) {
 
 function wsConnect(wsIP) {
 	let wsAdress = 'ws://'+wsIP+':81/'+data['page']+'.htm';
+	console.log("wsAdress=", wsAdress);
 	ws = new WebSocket(wsAdress, ['arduino']);
 	
 	ws.onopen = function(e) {
@@ -81,11 +84,11 @@ function wsConnect(wsIP) {
 
 
 
-function startConControl(ip){
-	console.log('ip = ', ip);
+function startConControl(){
+	console.log('deviceIp=', deviceIp);
 	changeIndicTypeConnect();
 
-	if (ip!=null || ip!="0")   wsConnect(ip);
+	if (deviceIp!=null && deviceIp!="")   wsConnect(deviceIp);
 	else if(!location.host) mqttConnect();
 
 	setInterval(function() {
@@ -165,7 +168,18 @@ function receivedDataProcessing(strJson){
 }
 
 
-let IPAdress = "192.168.43.159"; 
-if (location.host) IPAdress=location.host;
-startConControl(IPAdress);
-//startConControl();
+function setMqttDevName(nameDevice){
+	mqttDevName = nameDevice;
+	console.log('mqttDevName=', mqttDevName);
+}
+
+function setDeviceIp(setIp){
+	deviceIp = setIp;
+	console.log('deviceIp=', deviceIp);
+}
+
+//let IPAdress = "192.168.43.159"; 
+if (location.host) {
+	setDeviceIp(location.host);
+	startConControl();
+}

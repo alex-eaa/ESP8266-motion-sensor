@@ -35,7 +35,7 @@
 #define RELAY_GPIO 16       // пин, выход управления реле
 #define STAT_FILE "/stat.txt"
 #define CONFIG_FILE "/config.txt"
-#define HOST_NAME "esplink_ms_"
+#define DEVICE_TYPE "esplink_ms_"
 #define TIME_ATTEMP_CON_MQTT 5000   //время между попытками установки соединения с MQTT сервером
 
 bool wifiAP_mode = 0;
@@ -45,6 +45,9 @@ char *p_ssid = "lamp";
 char *p_password = "1234567890lamp";
 char* mqtt_server = "srv1.mqtt.4api.ru";
 int mqtt_server_port = 9124;
+String mqttUser = "user_889afb72";
+String mqttPass = "pass_7c9ca39a";
+String pubTopic;
 bool static_IP = 0;
 byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
