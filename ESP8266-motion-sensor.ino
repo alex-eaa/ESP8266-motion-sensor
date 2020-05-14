@@ -36,14 +36,16 @@
 #define STAT_FILE "/stat.txt"
 #define CONFIG_FILE "/config.txt"
 #define DEVICE_TYPE "esplink_ms_"
-#define TIME_ATTEMP_CON_MQTT 5000   //время между попытками установки соединения с MQTT сервером
+#define TIME_ATTEMP_CON_MQTT 5000     //время между попытками установки соединения с MQTT сервером, мс
+#define TIMEOUT_T_broadcastTXT 100000 //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
+#define TIME_DELTA_timeESPOn 5000     //период прибавки времени к timeESPOn при подсчете timeESPOn
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
 char *p_passwordAP = "12345678";
 char *p_ssid = "lamp";
 char *p_password = "1234567890lamp";
-char* mqtt_server = "srv1.mqtt.4api.ru";
+char *mqtt_server = "srv1.mqtt.4api.ru";
 int mqtt_server_port = 9124;
 String mqttUser = "user_889afb72";
 String mqttPass = "pass_7c9ca39a";
@@ -225,13 +227,13 @@ void loop() {
       int startT_broadcastTXT = micros();
       webSocket.broadcastTXT(data);
       int T_broadcastTXT = micros() - startT_broadcastTXT;
-      if (T_broadcastTXT > 100000)  checkPing();
+      if (T_broadcastTXT > TIMEOUT_T_broadcastTXT)  checkPing();
     }
     dataUpdateBit = 0;
   }
 
   //подсчет времени с момента включения устройства
-  if (millis() - startTimeESPOn > 5000) {
+  if (millis() - startTimeESPOn > TIME_DELTA_timeESPOn) {
     timeESPOn += (millis() - startTimeESPOn);
     startTimeESPOn = millis();
   }
@@ -244,7 +246,7 @@ void loop() {
 
   //Контроль переполнения таймера millis
   //Устанавливаем бит контроля переполнения таймера millis, при достижении им 4.200.000.000 из 4.294.967.296
-  if (overflowControl == 0 && millis() > 4200000000) {
+  if (overflowControl == 0 && millis() > 4294000000) {
     overflowControl = 1;
   }
   //Если произошло переполнение millis
