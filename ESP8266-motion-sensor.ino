@@ -25,20 +25,22 @@
 #include <PubSubClient.h>
 #include <Debounce.h>
 
-#define LED_WIFI_GPIO 2     // номер пина светодиода GPIO2 (D4)
-#define LED_RED_GPIO 15     // пин, красного светодиода 
-#define LED_GREEN_GPIO 12   // пин, зеленого светодиода 
-#define LED_BLUE_GPIO 13    // пин, синего светодиода
-#define BUTTON_GPIO 4       // номер пина кнопки GPIO4 (D2)
-#define SENSOR1_GPIO 14     // пин, вход датчика движения №1
-#define SENSOR2_GPIO 5      // пин, вход датчика движения №2
-#define RELAY_GPIO 16       // пин, выход управления реле
-#define STAT_FILE "/stat.txt"
-#define CONFIG_FILE "/config.txt"
+#define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
+#define GPIO_LED_RED 15     // пин, красного светодиода 
+#define GPIO_LED_GREEN 12   // пин, зеленого светодиода 
+#define GPIO_LED_BLUE 13    // пин, синего светодиода
+#define GPIO_BUTTON 4       // номер пина кнопки GPIO4 (D2)
+#define GPIO_SENSOR1 14     // пин, вход датчика движения №1
+#define GPIO_SENSOR2 5      // пин, вход датчика движения №2
+#define GPIO_RELAY 16       // пин, выход управления реле
+#define FILE_STAT "/stat.txt"
+#define FILE_CONFIG "/config.txt"
 #define DEVICE_TYPE "esplink_ms_"
 #define TIME_ATTEMP_CON_MQTT 5000     //время между попытками установки соединения с MQTT сервером, мс
 #define TIMEOUT_T_broadcastTXT 100000 //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
 #define TIME_DELTA_timeESPOn 5000     //период прибавки времени к timeESPOn при подсчете timeESPOn
+#define DEFAULT_AP_NAME "ESP"         //имя точки доступа запускаемой по кнопке
+#define DEFAULT_AP_PASS "11111111"    //пароль для точки доступа запускаемой по кнопке
 
 bool wifiAP_mode = 0;
 char *p_ssidAP = "AP";             //SSID-имя вашей сети
@@ -89,35 +91,35 @@ WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
-Debounce Sensor1(SENSOR1_GPIO);
-Debounce Sensor2(SENSOR2_GPIO);
+Debounce Sensor1(GPIO_SENSOR1);
+Debounce Sensor2(GPIO_SENSOR2);
 
 void setup() {
   Serial.begin(115200);
   Serial.println("\n");
-  pinMode(LED_WIFI_GPIO, OUTPUT);
-  pinMode(LED_GREEN_GPIO, OUTPUT);
-  pinMode(BUTTON_GPIO, INPUT_PULLUP);
-  pinMode(SENSOR1_GPIO, INPUT_PULLUP);
-  pinMode(SENSOR2_GPIO, INPUT_PULLUP);
-  pinMode(RELAY_GPIO, OUTPUT);
-  digitalWrite(LED_WIFI_GPIO, HIGH);
-  digitalWrite(LED_GREEN_GPIO, LOW);
-  digitalWrite(RELAY_GPIO, 1);
+  pinMode(GPIO_LED_WIFI, OUTPUT);
+  pinMode(GPIO_LED_GREEN, OUTPUT);
+  pinMode(GPIO_BUTTON, INPUT_PULLUP);
+  pinMode(GPIO_SENSOR1, INPUT_PULLUP);
+  pinMode(GPIO_SENSOR2, INPUT_PULLUP);
+  pinMode(GPIO_RELAY, OUTPUT);
+  digitalWrite(GPIO_LED_WIFI, HIGH);
+  digitalWrite(GPIO_LED_GREEN, LOW);
+  digitalWrite(GPIO_RELAY, 1);
   printChipInfo();
 
   SPIFFS.begin();
   scanAllFile();
-  printFile(CONFIG_FILE);
-  printFile(STAT_FILE);
-  loadFile(STAT_FILE);
+  printFile(FILE_CONFIG);
+  printFile(FILE_STAT);
+  loadFile(FILE_STAT);
 
   //Запуск точки доступа с параметрами поумолчанию
-  if ( !loadFile(CONFIG_FILE) ||  digitalRead(BUTTON_GPIO) == 0)  startAp("ESP", "11111111");
+  if ( !loadFile(FILE_CONFIG) ||  digitalRead(GPIO_BUTTON) == 0)  startAp(DEFAULT_AP_NAME, DEFAULT_AP_PASS);
   //Запуск точки доступа
-  else if (digitalRead(BUTTON_GPIO) == 1 && wifiAP_mode == 1)   startAp(p_ssidAP, p_passwordAP);
+  else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 1)   startAp(p_ssidAP, p_passwordAP);
   //Запуск подключения клиента к точке доступа
-  else if (digitalRead(BUTTON_GPIO) == 1 && wifiAP_mode == 0) {
+  else if (digitalRead(GPIO_BUTTON) == 1 && wifiAP_mode == 0) {
     if (WiFi.getPersistent() == true)    WiFi.persistent(false);
     WiFi.softAPdisconnect(true);
     WiFi.persistent(true);
@@ -160,11 +162,11 @@ void loop() {
 
   //Обработка состояния сенсоров
   int prevSensorState = sensor1State;
-  //sensor1State = digitalRead(SENSOR1_GPIO);
+  //sensor1State = digitalRead(GPIO_SENSOR1);
   sensor1State = Sensor1.read();
   if (prevSensorState != sensor1State)  dataUpdateBit = 1;
   prevSensorState = sensor2State;
-  //sensor2State = digitalRead(SENSOR2_GPIO);
+  //sensor2State = digitalRead(GPIO_SENSOR2);
   sensor2State = Sensor2.read();
   if (prevSensorState != sensor2State)  dataUpdateBit = 1;
 
@@ -200,19 +202,19 @@ void loop() {
   }
 
   //Изменение состояния реле
-  if (digitalRead(RELAY_GPIO) == 0 && relayState == 0) {
-    digitalWrite(RELAY_GPIO, 1);
+  if (digitalRead(GPIO_RELAY) == 0 && relayState == 0) {
+    digitalWrite(GPIO_RELAY, 1);
     int deltaTimeRelayOn = millis() - startTimeRelayOn;
     timeRelayOn += deltaTimeRelayOn;
     if (deltaTimeRelayOn > mdTimeRelayOn)  mdTimeRelayOn = deltaTimeRelayOn;
-    digitalWrite(LED_GREEN_GPIO, 0);
-    //digitalWrite(LED_WIFI_GPIO, 1);
+    digitalWrite(GPIO_LED_GREEN, 0);
+    //digitalWrite(GPIO_LED_WIFI, 1);
     dataUpdateBit = 1;
-  } else if (digitalRead(RELAY_GPIO) == 1 && relayState == 1) {
-    digitalWrite(RELAY_GPIO, 0);
+  } else if (digitalRead(GPIO_RELAY) == 1 && relayState == 1) {
+    digitalWrite(GPIO_RELAY, 0);
     startTimeRelayOn = millis();
-    digitalWrite(LED_GREEN_GPIO, 1);
-    //digitalWrite(LED_WIFI_GPIO, 0);
+    digitalWrite(GPIO_LED_GREEN, 1);
+    //digitalWrite(GPIO_LED_WIFI, 0);
     numbOn ++;
     dataUpdateBit = 1;
   }
@@ -240,7 +242,7 @@ void loop() {
 
   //Сохранение stat данных в файл с периодичностью timeSaveStat
   if (millis() - startTimeSaveStat > timeSaveStat) {
-    saveFile(STAT_FILE);
+    saveFile(FILE_STAT);
     startTimeSaveStat = millis();
   }
 

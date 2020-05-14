@@ -21,13 +21,13 @@ void wifi_init()
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
     startMSDN();
     wlConnectedMsgSend = 1;
-    digitalWrite(LED_WIFI_GPIO, 0);
+    digitalWrite(GPIO_LED_WIFI, 0);
   }
 
   if (wifiAP_mode == 0 && wifiAP_runned == 0) {
     //Мигание LED WIFI при поиске точки доступа
     if (WiFi.status() != WL_CONNECTED && millis() - ledBlinkTimer > 250) {
-      digitalWrite(LED_WIFI_GPIO, !digitalRead(LED_WIFI_GPIO));
+      digitalWrite(GPIO_LED_WIFI, !digitalRead(GPIO_LED_WIFI));
       ledBlinkTimer = millis();
       wlConnectedMsgSend = 0;
     }
@@ -35,7 +35,7 @@ void wifi_init()
     //Мигание LED WIFI при работе точки доступа
     if (wifiAP_runned == 1) {
       if (millis() - ledBlinkTimer > 750) {
-        digitalWrite(LED_WIFI_GPIO, !digitalRead(LED_WIFI_GPIO));
+        digitalWrite(GPIO_LED_WIFI, !digitalRead(GPIO_LED_WIFI));
         ledBlinkTimer = millis();
       }
     }

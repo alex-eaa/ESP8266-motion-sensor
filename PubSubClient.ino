@@ -20,13 +20,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
     sendToMqttServer(serializationToJson_setup());
   }
   else if (stream.str() == "RESET") {
-    saveFile(CONFIG_FILE);
-    saveFile(STAT_FILE);
+    saveFile(FILE_CONFIG);
+    saveFile(FILE_STAT);
     delay(100);
     ESP.reset();
   }
   else if (stream.str() == "RESETSTAT") {
-    SPIFFS.remove(STAT_FILE);
+    SPIFFS.remove(FILE_STAT);
     delay(500);
     ESP.reset();
   }

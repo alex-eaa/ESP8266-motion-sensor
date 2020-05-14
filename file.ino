@@ -5,7 +5,7 @@ bool saveFile(char *filename)
   SPIFFS.remove(filename);
 
   DynamicJsonDocument doc(1024);
-  if (filename == CONFIG_FILE) {
+  if (filename == FILE_CONFIG) {
     doc["delayOff"] = delayOff;
     doc["relayMode"] = relayMode;
     doc["sensor1Use"] = sensor1Use;
@@ -23,7 +23,7 @@ bool saveFile(char *filename)
     for (int n = 0; n < 4; n++)  sbntJsonArray.add(sbnt[n]);
     JsonArray gtwJsonArray = doc.createNestedArray("gtw");
     for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
-  } else if (filename == STAT_FILE) {
+  } else if (filename == FILE_STAT) {
     doc["numbOn"] = numbOn;
     doc["timeRelayOn"] = timeRelayOn;
   }
@@ -61,7 +61,7 @@ bool loadFile(char *filename) {
   }
 
   // Copy values from the JsonDocument to the value
-  if (filename == CONFIG_FILE) {
+  if (filename == FILE_CONFIG) {
     delayOff = doc["delayOff"];        //Serial.println(delayOff);
     relayMode = doc["relayMode"];      //Serial.println(relayMode);
     sensor1Use = doc["sensor1Use"];    //Serial.println(sensor1Use);
@@ -97,7 +97,7 @@ bool loadFile(char *filename) {
     gtw[1] = doc["gtw"][1];           //Serial.println(gtw[1]);
     gtw[2] = doc["gtw"][2];           //Serial.println(gtw[2]);
     gtw[3] = doc["gtw"][3];           //Serial.println(gtw[3]);
-  } else if (filename == STAT_FILE) {
+  } else if (filename == FILE_STAT) {
     numbOn = doc["numbOn"];                //Serial.print("numbOn= "); Serial.println(numbOn);
     timeRelayOn = doc["timeRelayOn"];      //Serial.print("timeRelayOn = "); Serial.println(timeRelayOn);
   }

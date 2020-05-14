@@ -38,13 +38,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] get from WS: %s\n", num, payload);
 
         if (strcmp((char *)payload, "RESET") == 0) {
-          saveFile(CONFIG_FILE);
-          saveFile(STAT_FILE);
+          saveFile(FILE_CONFIG);
+          saveFile(FILE_STAT);
           delay(50);
           ESP.reset();
         }
         else if (strcmp((char *)payload, "RESETSTAT") == 0) {
-          SPIFFS.remove(STAT_FILE);
+          SPIFFS.remove(FILE_STAT);
           delay(500);
           ESP.reset();
         }
