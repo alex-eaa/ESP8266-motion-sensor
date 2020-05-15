@@ -38,7 +38,7 @@ bool saveFile(char *filename)
 
   if (rezSerialization == 0)  Serial.print(F("Failed write to file: "));
   else   //Serial.print(F("Save file complited: "));
-  return rezSerialization;
+    return rezSerialization;
 }
 
 
@@ -68,22 +68,35 @@ bool loadFile(char *filename) {
     sensor2Use = doc["sensor2Use"];    //Serial.println(sensor2Use);
     wifiAP_mode = doc["wifiAP_mode"];    //Serial.println(wifiAP_mode);
     conIndic = doc["conIndic"];          //Serial.println(conIndic);
+
+    delete[] p_passwordAP;
+    delete[] p_ssidAP;
+    delete[] p_password;
+    delete[] p_ssid;
+
+    int t1 = micros();
     String stemp = doc["p_ssid"].as<String>();
     p_ssid = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssid, stemp.length() + 1);
-    //Serial.print(F("p_ssid="));   Serial.println(p_ssid);
+
     stemp = doc["p_password"].as<String>();
     p_password = new char [stemp.length() + 1];
     stemp.toCharArray(p_password, stemp.length() + 1);
-    //Serial.print(F("p_password="));   Serial.println(p_password);
-    stemp = doc["p_passwordAP"].as<String>();
-    p_passwordAP = new char [stemp.length() + 1];
-    stemp.toCharArray(p_passwordAP, stemp.length() + 1);
-    //Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
+
     stemp = doc["p_ssidAP"].as<String>();
     p_ssidAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssidAP, stemp.length() + 1);
-    //Serial.print(F("p_ssidAP="));   Serial.println(p_ssidAP);
+
+    stemp = doc["p_passwordAP"].as<String>();
+    p_passwordAP = new char [stemp.length() + 1];
+    stemp.toCharArray(p_passwordAP, stemp.length() + 1);
+    int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
+
+    Serial.print(F("p_ssid="));         Serial.println(p_ssid);
+    Serial.print(F("p_password="));     Serial.println(p_password);
+    Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
+    Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
+
     static_IP = doc["static_IP"];     //Serial.println(static_IP);
     ip[0] = doc["ip"][0];             //Serial.println(ip[0]);
     ip[1] = doc["ip"][1];             //Serial.println(ip[1]);

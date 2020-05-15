@@ -43,10 +43,6 @@
 #define DEFAULT_AP_PASS "11111111"    //пароль для точки доступа запускаемой по кнопке
 
 bool wifiAP_mode = 0;
-char *p_ssidAP = "AP";             //SSID-имя вашей сети
-char *p_passwordAP = "12345678";
-char *p_ssid = "lamp";
-char *p_password = "1234567890lamp";
 char *mqtt_server = "srv1.mqtt.4api.ru";
 int mqtt_server_port = 9124;
 String mqttUser = "user_889afb72";
@@ -56,6 +52,15 @@ bool static_IP = 0;
 byte ip[4] = {192, 168, 1, 43};
 byte sbnt[4] = {255, 255, 255, 0};
 byte gtw[4] = {192, 168, 1, 1};
+
+char *p_ssid = new char[0];
+char *p_password = new char[0];
+char *p_ssidAP = new char[0];
+char *p_passwordAP = new char[0];
+//char *p_ssid = "lamp";
+//char *p_password = "1234567890lamp";
+//char *p_ssidAP = p_ssidAP = "AP_ESP8266";             //SSID-имя вашей сети
+//char *p_passwordAP = "12345678";
 
 bool conIndic = 0;  //бит работы индикатора соединения, 1-вкл. 0-откл., данные отправляются каждые 2000 мс
 
@@ -109,6 +114,7 @@ void setup() {
   printChipInfo();
 
   SPIFFS.begin();
+  //saveFile(FILE_CONFIG);
   scanAllFile();
   printFile(FILE_CONFIG);
   printFile(FILE_STAT);

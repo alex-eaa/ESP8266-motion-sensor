@@ -1,4 +1,3 @@
-bool flag;
 
 // функция иннициализации сервера WebSocket
 void webSocket_init()

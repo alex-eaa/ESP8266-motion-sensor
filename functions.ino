@@ -1,6 +1,6 @@
 //Print configuration parameters
 void printConfiguration () {
-  Serial.println(F("Print ALL VARIABLE:"));
+  Serial.println(F("\nPrint ALL VARIABLE:"));
   Serial.print(F("wifiAP_mode="));  Serial.println(wifiAP_mode);
   Serial.print(F("p_ssidAP="));     Serial.println(p_ssidAP);
   Serial.print(F("p_passwordAP=")); Serial.println(p_passwordAP);
@@ -29,4 +29,5 @@ void printChipInfo() {
   Serial.print(F("<-> SKETCH SIZE: "));          Serial.println(ESP.getSketchSize());
   Serial.print(F("<-> FREE SKETCH SIZE: "));     Serial.println(ESP.getFreeSketchSpace());
   Serial.print(F("<-> CYCLE COUNTD: "));         Serial.println(ESP.getCycleCount());
+  Serial.println("");
 }
