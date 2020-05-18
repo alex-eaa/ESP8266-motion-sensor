@@ -19,7 +19,7 @@ void wifi_init()
     Serial.print(F("My default hostname: "));   Serial.println(WiFi.hostname());
     Serial.print(F("Connected to AP with SSID: "));       Serial.println(WiFi.SSID());
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
-    startMSDN();
+    startMDNS();
     wlConnectedMsgSend = 1;
     digitalWrite(GPIO_LED_WIFI, 0);
   }
@@ -52,7 +52,7 @@ void startAp(char *ap_ssid, const char *ap_password)
   WiFi.softAP(ap_ssid, ap_password);
   WiFi.persistent(true);                                      //enable saving wifi config into SDK flash area
   wifiAP_runned = 1;
-  startMSDN();
+  startMDNS();
   Serial.print(F("SSID AP: "));      Serial.println(ap_ssid);
   Serial.print(F("Password AP: "));  Serial.println(ap_password);
   Serial.print(F("Start AP with SSID: "));       Serial.println(WiFi.softAPSSID());
@@ -74,7 +74,7 @@ void set_staticIP()
 
 
 
-void startMSDN() {
+void startMDNS() {
   String mdnsNameStr = DEVICE_TYPE + String(ESP.getChipId(), HEX);
   //Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsNameStr);
   char mdnsName[mdnsNameStr.length()];
