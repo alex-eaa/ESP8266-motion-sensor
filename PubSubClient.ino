@@ -6,7 +6,7 @@ void mqtt_init() {
   mqtt.setCallback(callback);
   mqtt.setStream(stream);
   pubTopic = mqttUser + "/" + DEVICE_TYPE + String(ESP.getChipId(), HEX) + "/fromDevice";
-  Serial.print("pubTopic: ");        Serial.println(pubTopic);
+  //Serial.print("pubTopic: ");        Serial.println(pubTopic);
 }
 
 

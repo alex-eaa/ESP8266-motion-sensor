@@ -74,7 +74,6 @@ bool loadFile(char *filename) {
     delete[] p_password;
     delete[] p_ssid;
 
-    int t1 = micros();
     String stemp = doc["p_ssid"].as<String>();
     p_ssid = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssid, stemp.length() + 1);
@@ -90,12 +89,11 @@ bool loadFile(char *filename) {
     stemp = doc["p_passwordAP"].as<String>();
     p_passwordAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
-    int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
 
-    Serial.print(F("p_ssid="));         Serial.println(p_ssid);
-    Serial.print(F("p_password="));     Serial.println(p_password);
-    Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
-    Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
+    //Serial.print(F("p_ssid="));         Serial.println(p_ssid);
+    //Serial.print(F("p_password="));     Serial.println(p_password);
+    //Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
+    //Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
 
     static_IP = doc["static_IP"];     //Serial.println(static_IP);
     ip[0] = doc["ip"][0];             //Serial.println(ip[0]);

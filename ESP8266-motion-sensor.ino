@@ -111,13 +111,15 @@ void setup() {
   digitalWrite(GPIO_LED_WIFI, HIGH);
   digitalWrite(GPIO_LED_GREEN, LOW);
   digitalWrite(GPIO_RELAY, 1);
-  printChipInfo();
+
+  //printChipInfo();
 
   SPIFFS.begin();
+  saveRstInfoToFile();
   //saveFile(FILE_CONFIG);
-  scanAllFile();
-  printFile(FILE_CONFIG);
-  printFile(FILE_STAT);
+  //scanAllFile();
+  //printFile(FILE_CONFIG);
+  //printFile(FILE_STAT);
   loadFile(FILE_STAT);
 
   //Запуск точки доступа с параметрами поумолчанию
@@ -266,5 +268,7 @@ void loop() {
   }
 
 }
+
+
 
 

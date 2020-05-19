@@ -63,7 +63,7 @@ void deserealizationFromJson(const String &json) {
     delete[] p_password;
     delete[] p_ssid;
 
-    int t1 = micros();
+    //int t1 = micros();
     String stemp = doc["p_ssid"].as<String>();
     p_ssid = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssid, stemp.length() + 1);
@@ -79,7 +79,7 @@ void deserealizationFromJson(const String &json) {
     stemp = doc["p_passwordAP"].as<String>();
     p_passwordAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
-    int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
+    //int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
 
 
     //Serial.print(F("p_ssid="));         Serial.println(p_ssid);
@@ -102,8 +102,8 @@ void deserealizationFromJson(const String &json) {
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
     conIndic = doc["conIndic"];        //Serial.println(conIndic);
-    //saveFile(FILE_CONFIG);
-    //saveFile(FILE_STAT);
+    saveFile(FILE_CONFIG);
+    saveFile(FILE_STAT);
     sendToMqttServer(serializationToJson_setup());
   }
 }
