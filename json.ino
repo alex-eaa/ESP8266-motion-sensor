@@ -52,8 +52,10 @@ void deserealizationFromJson(const String &json) {
     relayMode = doc["relayMode"];        //Serial.println(relayMode);
     sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1Use);
     sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2Use);
+    
     saveFile(FILE_CONFIG);
     saveFile(FILE_STAT);
+    
     dataUpdateBit = 1;
   }
   else if (doc["page"].as<String>() == "setup") {
@@ -81,7 +83,6 @@ void deserealizationFromJson(const String &json) {
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
     //int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
 
-
     //Serial.print(F("p_ssid="));         Serial.println(p_ssid);
     //Serial.print(F("p_password="));     Serial.println(p_password);
     //Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
@@ -102,9 +103,10 @@ void deserealizationFromJson(const String &json) {
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
     conIndic = doc["conIndic"];        //Serial.println(conIndic);
+    
     saveFile(FILE_CONFIG);
     saveFile(FILE_STAT);
+    
     sendToMqttServer(serializationToJson_setup());
   }
 }
-

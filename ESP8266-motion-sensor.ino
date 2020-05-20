@@ -14,18 +14,20 @@
     - GPIO15 (D8) - красный цвет RGB-светодиода (для платы типа ESP8266 Witty).
 */
 
+#include <FS.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
-#include <WebSocketsServer.h>
-#include <FS.h>
-#include <ArduinoJson.h>
-#include <StreamUtils.h>
-#include <PubSubClient.h>
+#include <WebSocketsServer.h>    //https://github.com/Links2004/arduinoWebSockets
+#include <StreamUtils.h>         //https://github.com/bblanchon/ArduinoStreamUtils
+#include <PubSubClient.h>        //https://pubsubclient.knolleary.net/
 #include <Debounce.h>            //https://github.com/wkoch/Debounce
 #include <NTPClient.h>           //https://github.com/arduino-libraries/NTPClient
 #include <TimeLib.h>             //https://playground.arduino.cc/Code/Time/
+#include <ArduinoJson.h>         /*https://github.com/bblanchon/ArduinoJson 
+                                   https://arduinojson.org/?utm_source=meta&utm_medium=library.properties */
+                                 
 
 #define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
 #define GPIO_LED_RED 15     // пин, красного светодиода 
@@ -38,11 +40,14 @@
 #define FILE_STAT "/stat.txt"
 #define FILE_CONFIG "/config.txt"
 #define DEVICE_TYPE "esplink_ms_"
-#define TIME_ATTEMP_CON_MQTT 5000     //время между попытками установки соединения с MQTT сервером, мс
-#define TIMEOUT_T_broadcastTXT 100000 //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
-#define TIME_DELTA_timeESPOn 5000     //период прибавки времени к timeESPOn при подсчете timeESPOn
-#define DEFAULT_AP_NAME "ESP"         //имя точки доступа запускаемой по кнопке
-#define DEFAULT_AP_PASS "11111111"    //пароль для точки доступа запускаемой по кнопке
+#define TIME_ATTEMP_CON_MQTT 5000       //время между попытками установки соединения с MQTT сервером, мс
+#define TIMEOUT_T_broadcastTXT 100000   //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
+#define TIME_DELTA_timeESPOn 5000       //период прибавки времени к timeESPOn при подсчете timeESPOn
+#define DEFAULT_AP_NAME "ESP"           //имя точки доступа запускаемой по кнопке
+#define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа запускаемой по кнопке
+#define TIME_NTP_OFFSET 10800           //время смещения часового пояса, сек (10800 = +3 часа)
+#define TIME_NTP_UPDATE_INTERVAL 300000 //время синхронизации времени с NTP, мс (300000 = 5 мин)
+#define NTP_SERVER "pool.ntp.org"       //адрес NTP сервера
 
 bool wifiAP_mode = 0;
 char *mqtt_server = "srv1.mqtt.4api.ru";
@@ -103,7 +108,7 @@ PubSubClient mqtt(espClient);
 Debounce Sensor1(GPIO_SENSOR1);
 Debounce Sensor2(GPIO_SENSOR2);
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 300000);
+NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
 
 void setup() {
@@ -275,7 +280,3 @@ void loop() {
   }
 
 }
-
-
-
-
