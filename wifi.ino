@@ -20,6 +20,7 @@ void wifi_init()
     Serial.print(F("Connected to AP with SSID: "));       Serial.println(WiFi.SSID());
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
     startMDNS();
+    timeClient.begin();
     wlConnectedMsgSend = 1;
     digitalWrite(GPIO_LED_WIFI, 0);
   }
@@ -68,7 +69,7 @@ void set_staticIP()
   IPAddress ipAdr(ip[0], ip[1], ip[2], ip[3]);
   IPAddress gateway(gtw[0], gtw[1], gtw[2], gtw[3]);
   IPAddress subnet(sbnt[0], sbnt[1], sbnt[2], sbnt[3]);
-  WiFi.config(ipAdr, gateway, gateway, subnet);  //второй параметр установка DNS
+  WiFi.config(ipAdr, gateway, gateway, subnet);          //второй параметр установка DNS
   Serial.println(F("Set static ip, sbnt, gtw."));
 }
 

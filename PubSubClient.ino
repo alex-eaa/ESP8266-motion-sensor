@@ -10,6 +10,17 @@ void mqtt_init() {
 }
 
 
+void mqttConnect(){
+    if (mqtt.connected()) {
+    mqtt.loop();
+    //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 5 сек
+  } else if (!mqtt.connected() && WiFi.status() == WL_CONNECTED && millis() - startMqttReconnectTime > TIME_ATTEMP_CON_MQTT) {
+    reconnect();
+    startMqttReconnectTime = millis();
+  }
+}
+
+
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("From MQTT server: ");            Serial.println(stream.str());
 

@@ -45,15 +45,50 @@ int getRstInfo() {
   //REASON_EXT_SYS_RST      = 6 /* external hardware reset */
 }
 
+
 void saveRstInfoToFile() {
   String filename = "/rst.txt";
-  SPIFFS.remove(filename);
-  File file = SPIFFS.open(filename, "w");
+  //SPIFFS.remove(filename);
+  File file = SPIFFS.open(filename, "a");
   if (!file) {
     Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
   } else {
     file.print(getRstInfo());
+    file.print(" - ");
+    file.println(getDataTimeStr());
+    //Serial.print(F("Saved to file "));   Serial.println(filename);
   }
   file.close();
+}
+
+
+
+void saveTimeOnRelay() {
+  String filename = "/relay.txt";
+  //SPIFFS.remove(filename);
+  File file = SPIFFS.open(filename, "a");
+  if (!file) {
+    Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
+  } else {
+    if (sensor1State)   file.print("IN  ");
+    if (sensor2State)   file.print("OUT ");
+    file.print(" - ");
+    file.println(getDataTimeStr());
+    //Serial.print(F("Saved to file "));   Serial.println(filename);
+  }
+  file.close();
+}
+
+
+String getDataTimeStr() {
+  time_t t = timeClient.getEpochTime();
+  String data_time = String(year(t));
+  data_time += ".";
+  data_time += String(month(t));
+  data_time += ".";
+  data_time += String(day(t));
+  data_time += " ";
+  data_time += String(timeClient.getFormattedTime());
+  return data_time;
 }
 

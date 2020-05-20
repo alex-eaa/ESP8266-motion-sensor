@@ -23,7 +23,9 @@
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
 #include <PubSubClient.h>
-#include <Debounce.h>
+#include <Debounce.h>            //https://github.com/wkoch/Debounce
+#include <NTPClient.h>           //https://github.com/arduino-libraries/NTPClient
+#include <TimeLib.h>             //https://playground.arduino.cc/Code/Time/
 
 #define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
 #define GPIO_LED_RED 15     // пин, красного светодиода 
@@ -92,12 +94,17 @@ unsigned int timeSaveStat = 43200000;   //периодичность сохра�
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
 unsigned int startMqttReconnectTime = 0;  //вспом. для отсчета времени переподключения к mqtt
 
+bool flagSaveRstFile = false;
+
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 Debounce Sensor1(GPIO_SENSOR1);
 Debounce Sensor2(GPIO_SENSOR2);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 10800, 300000);
+
 
 void setup() {
   Serial.begin(115200);
@@ -115,11 +122,11 @@ void setup() {
   //printChipInfo();
 
   SPIFFS.begin();
-  saveRstInfoToFile();
   //saveFile(FILE_CONFIG);
   //scanAllFile();
   //printFile(FILE_CONFIG);
   //printFile(FILE_STAT);
+
   loadFile(FILE_STAT);
 
   //Запуск точки доступа с параметрами поумолчанию
@@ -157,14 +164,13 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   MDNS.update();
+  mqttConnect();
+  if (WiFi.status() == WL_CONNECTED)  timeClient.update();
 
-
-  if (mqtt.connected()) {
-    mqtt.loop();
-    //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 5 сек
-  } else if (!mqtt.connected() && WiFi.status() == WL_CONNECTED && millis() - startMqttReconnectTime > TIME_ATTEMP_CON_MQTT) {
-    reconnect();
-    startMqttReconnectTime = millis();
+  //Сохраняем в файл rst время и причину перезапуска при запуске контроллера
+  if (!flagSaveRstFile && timeClient.getEpochTime() > 100000000) {
+    saveRstInfoToFile();
+    flagSaveRstFile = true;
   }
 
 
@@ -215,13 +221,14 @@ void loop() {
     int deltaTimeRelayOn = millis() - startTimeRelayOn;
     timeRelayOn += deltaTimeRelayOn;
     if (deltaTimeRelayOn > mdTimeRelayOn)  mdTimeRelayOn = deltaTimeRelayOn;
-    digitalWrite(GPIO_LED_GREEN, 0);
+    //digitalWrite(GPIO_LED_GREEN, 0);
     //digitalWrite(GPIO_LED_WIFI, 1);
     dataUpdateBit = 1;
   } else if (digitalRead(GPIO_RELAY) == 1 && relayState == 1) {
     digitalWrite(GPIO_RELAY, 0);
     startTimeRelayOn = millis();
-    digitalWrite(GPIO_LED_GREEN, 1);
+    saveTimeOnRelay();
+    //digitalWrite(GPIO_LED_GREEN, 1);
     //digitalWrite(GPIO_LED_WIFI, 0);
     numbOn ++;
     dataUpdateBit = 1;
