@@ -27,7 +27,8 @@
 #include <TimeLib.h>             //https://playground.arduino.cc/Code/Time/
 #include <ArduinoJson.h>         /*https://github.com/bblanchon/ArduinoJson 
                                    https://arduinojson.org/?utm_source=meta&utm_medium=library.properties */
-                                 
+#include "PirSensor.h";
+#include "Relay.h";
 
 #define GPIO_LED_WIFI 2     // номер пина светодиода GPIO2 (D4)
 #define GPIO_LED_RED 15     // пин, красного светодиода 
@@ -110,6 +111,9 @@ Debounce Sensor2(GPIO_SENSOR2);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
+//PirSensor pirSensor1(GPIO_BUTTON);
+Relay relay(GPIO_LED_WIFI);
+
 
 void setup() {
   Serial.begin(115200);
@@ -160,11 +164,24 @@ void setup() {
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
+
+  relay.on();
+  delay(1000);
+  relay.off();
+  delay(1000);
+  relay.on();
+  delay(1000);
+  relay.off();
+  delay(1000);
+  relay.addPirSensor(GPIO_BUTTON);
+
 }
 
 
 
 void loop() {
+  Serial.print("pirSensor1 = ");            Serial.println(relay.ptrArrayPirSensors[0]->read());
+
   wifi_init();
   webSocket.loop();
   server.handleClient();
