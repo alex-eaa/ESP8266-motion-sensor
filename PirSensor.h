@@ -6,30 +6,32 @@ class PirSensor {
   private:
     bool sensor_state;
     unsigned int timeBounce = 50;   //время подавления дребезга, мс
-    unsigned int prevTimeBounce;
+    unsigned int prevTimeBounce;          //вспом. для timeBounce
 
   public:
     int sensor_pin;
 
+  public:
     PirSensor(int pin);
     bool read();
-    void setPin(int pin);
 };
 
 
 //* PirSensor Class Constructor
 PirSensor::PirSensor(int pin) {
-  setPin(pin);
-}
-
-
-//Установка номера GPIO и инициализация PirSensor 
-void PirSensor::setPin(int pin) {
   sensor_pin = pin;
   pinMode(sensor_pin, INPUT_PULLUP);
   prevTimeBounce = millis();
 }
 
+/*
+  //Установка номера GPIO и инициализация PirSensor
+  void PirSensor::setPin(int pin) {
+  sensor_pin = pin;
+  pinMode(sensor_pin, INPUT_PULLUP);
+  prevTimeBounce = millis();
+  }
+*/
 
 //Считывание состояния датчика pirs с подавлением дребезга контактов
 bool PirSensor::read() {
@@ -44,4 +46,3 @@ bool PirSensor::read() {
   }
   return sensor_state;
 }
-

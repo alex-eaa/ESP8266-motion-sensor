@@ -111,8 +111,9 @@ Debounce Sensor2(GPIO_SENSOR2);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
-//PirSensor pirSensor1(GPIO_BUTTON);
+PirSensor pirSensor0(GPIO_BUTTON);
 Relay relay(GPIO_LED_WIFI);
+int tm1, tm2;
 
 
 void setup() {
@@ -165,24 +166,41 @@ void setup() {
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
 
-  relay.on();
-  delay(1000);
-  relay.off();
-  delay(1000);
-  relay.on();
-  delay(1000);
-  relay.off();
-  delay(1000);
-  relay.addPirSensor(GPIO_BUTTON);
+  relay.setMode(1);   
+  relay.update();  delay(300);
+  relay.setMode(0);  
+  relay.update();  delay(1000);
+  relay.setMode(1);   
+  relay.update();  delay(300);
+  relay.setMode(0);  
+  relay.update();  delay(1000);
+  relay.setMode(2);
+  relay.update();
+  relay.atachPirSensor(0, &pirSensor0);
+  relay.atachPirSensor(1, &pirSensor0);
+  tm1 = millis();
+  tm2 = millis();
 
 }
 
 
 
 void loop() {
-  Serial.print("pirSensor1 = ");            Serial.println(relay.ptrArrayPirSensors[0]->read());
+  if (millis() - tm1 > 2000) {
+    Serial.print("RELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
+    Serial.print("RELAY.readPirSensor(1) = ");      Serial.println(relay.readPirSensor(1));
+    tm1 = millis();
+    relay.update();
+  }
 
-  wifi_init();
+  if (millis() - tm2 > 10000) {
+    Serial.print("relay.detachPirSensor(1) "); 
+    relay.detachPirSensor(1);
+    tm2 = millis();
+  }
+
+
+  //wifi_init();
   webSocket.loop();
   server.handleClient();
   MDNS.update();

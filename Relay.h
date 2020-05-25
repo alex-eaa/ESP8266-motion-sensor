@@ -7,8 +7,9 @@
 #define OFF 0
 
 //Режимы работы реле
-#define mode_0 0    // - работа без сенсоров (в ручном режиме)
-#define mode_1 1    // - от pirSensor
+#define MODE_OFF 0    // - реле отключено
+#define MODE_ON 1    // - реле включено
+#define MODE_AUTO 2    // - работа с сенсорами(в автоматическом режиме)
 
 
 class Relay {
@@ -16,40 +17,40 @@ class Relay {
     bool relay_state = OFF;
     unsigned int ancillary_relay_work_time_total;   //вспом. переменная для счетчик полного времени работы реле
     unsigned int ancillary_realay_delay_off;        //вспом. переменная для задержка отключения для датчика движения
+    PirSensor *pirSensor0Ptr = nullptr;
+    PirSensor *pirSensor1Ptr = nullptr;
+
+  private:
+    void on();
+    void off();
+
 
   public:
     int relay_pin;
-    int relay_mode = 0;
+    int relay_mode = MODE_OFF;
     int relay_number_on_total = 0;               //счетчик общего количества включений реле
     unsigned int relay_work_time_total = 0;      //счетчик полного времени работы реле, cек
     unsigned int relay_delay_off = 4000;         //задержка отключения для датчика движения, мсек
-    int ptrArrayPirSensors_size = 0;             //размер массива указателей на объекты PirSensor
-    PirSensor **ptrArrayPirSensors;              //Динамический массив указателей на объекты PirSensor в этом объекте реле
 
     Relay(int);
-    void setPin(int);
-    void on();
-    void off();
     void toggle();
     bool getState();
     void setMode(int);
     int getMode();
-    void addPirSensor(int);
-    void delPirSensor(int);
+    void update();
+    void atachPirSensor(int number, PirSensor *pirSensorPtr);
+    void detachPirSensor(int number);
+    bool readPirSensor(int number);
 };
 
 
 //* Relay Class Constructor
 Relay::Relay(int pin) {
-  setPin(pin);
-}
-
-//Установка номера GPIO и инициализация Relay
-void Relay::setPin(int pin) {
   relay_pin = pin;
   pinMode(relay_pin, OUTPUT);
   digitalWrite(relay_pin, relay_state);
 }
+
 
 //Включение реле
 void Relay::on() {
@@ -81,20 +82,63 @@ bool Relay::getState() {
   return relay_state;
 }
 
+//Установить режим работы реле
 void Relay::setMode(int mode) {
   relay_mode = mode;
 }
 
+//Получить режим работы реле
 int Relay::getMode() {
   return relay_mode;
 }
 
-void Relay::addPirSensor(int gpio) {
-  if (ptrArrayPirSensors_size == 0) {
-    ptrArrayPirSensors = new PirSensor* [1];
-    ptrArrayPirSensors[0] = new PirSensor(gpio);
-    Serial.print("Add new PirSensor, gpio = ");   Serial.println(ptrArrayPirSensors[0]->sensor_pin);
-    ptrArrayPirSensors_size ++;
+
+void Relay::update() {
+  if (relay_mode == 0) {
+    off();
+  } else if (relay_mode == 1) {
+    on();
+  }
+  else {
+    bool result = false;
+    if (pirSensor0Ptr != nullptr)  result = result | pirSensor0Ptr->read();
+    if (pirSensor1Ptr != nullptr)  result = result | pirSensor1Ptr->read();
+
+    if (result) on();
+    else off();
   }
 }
 
+
+
+void Relay::atachPirSensor(int number, PirSensor *pirSensorPtr) {
+  switch (number) {
+    case 0:
+      pirSensor0Ptr = pirSensorPtr;
+      break;
+    case 1:
+      pirSensor1Ptr = pirSensorPtr;
+      break;
+  }
+}
+
+void Relay::detachPirSensor(int number) {
+  switch (number) {
+    case 0:
+      pirSensor0Ptr = nullptr;
+      break;
+    case 1:
+      pirSensor1Ptr = nullptr;
+      break;
+  }
+}
+
+
+bool Relay::readPirSensor(int number) {
+  switch (number) {
+    case 0:
+      if (pirSensor0Ptr != nullptr)   return pirSensor0Ptr->read();
+    case 1:
+      if (pirSensor1Ptr != nullptr)   return pirSensor1Ptr->read();
+  }
+}
