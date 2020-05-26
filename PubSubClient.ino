@@ -22,7 +22,7 @@ void mqttConnect(){
 
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("From MQTT server: ");            Serial.println(stream.str());
+  Serial.print("From MQTT server: ");               Serial.println(stream.str());
 
   if (stream.str() == "INDEX") {
     sendToMqttServer(serializationToJson_index());

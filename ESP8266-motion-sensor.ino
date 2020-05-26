@@ -40,6 +40,8 @@
 #define GPIO_RELAY 16       // пин, выход управления реле
 #define FILE_STAT "/stat.txt"
 #define FILE_CONFIG "/config.txt"
+#define NEW_FILE_STAT "/statNEW.txt"
+#define NEW_FILE_CONFIG "/configNEW.txt"
 #define DEVICE_TYPE "esplink_ms_"
 #define TIME_ATTEMP_CON_MQTT 5000       //время между попытками установки соединения с MQTT сервером, мс
 #define TIMEOUT_T_broadcastTXT 100000   //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
@@ -111,7 +113,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
 PirSensor pirSensor0(GPIO_BUTTON);
-PirSensor pirSensor1(GPIO_BUTTON);
+//PirSensor pirSensor1(GPIO_SENSOR2);
 Relay relay(GPIO_LED_WIFI, MODE_AUTO);
 int tm1, tm2;
 
@@ -171,7 +173,6 @@ void setup() {
   //relay.atachPirSensor(1, &pirSensor0);
   tm1 = millis();
   tm2 = millis();
-
 }
 
 
@@ -179,35 +180,19 @@ void setup() {
 void loop() {
   relay.update();
   if (millis() - tm1 > 1000) {
-    Serial.print("\nRELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
+    Serial.print("RELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
     Serial.print("RELAY.readPirSensor(1) = ");      Serial.println(relay.readPirSensor(1));
     Serial.print("RELAY.relay_state = ");      Serial.println(relay.relay_state);
     Serial.print("RELAY.relay_mode = ");      Serial.println(relay.relay_mode);
     Serial.print("RELAY.relay_number_on_total = ");      Serial.println(relay.relay_number_on_total);
     Serial.print("RELAY.relay_work_time_total = ");      Serial.println(relay.relay_work_time_total);
     Serial.print("RELAY.max_delay_between_on_off = ");      Serial.println(relay.max_delay_between_on_off);
+    
     tm1 = millis();
   }
 
   if (millis() - tm2 > 10000) {
-    DynamicJsonDocument doc(1024);
-    //Настройки сети (страница setup.htm)
-    doc["wifiAP_mode"] = wifiAP_mode;
-    doc["p_ssidAP"] = p_ssidAP;
-    doc["p_passwordAP"] = p_passwordAP;
-    doc["p_ssid"] = p_ssid;
-    doc["p_password"] = p_password;
-    doc["static_IP"] = static_IP;
-    JsonArray ipJsonArray = doc.createNestedArray("ip");
-    for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
-    JsonArray sbntJsonArray = doc.createNestedArray("sbnt");
-    for (int n = 0; n < 4; n++)  sbntJsonArray.add(sbnt[n]);
-    JsonArray gtwJsonArray = doc.createNestedArray("gtw");
-    for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
-    //Состояние реле
-    relay.serialize(&doc);
-
-    serializeJson(doc, Serial);
+ 
     tm2 = millis();
   }
 

@@ -3,13 +3,16 @@
 /////////////////////////////////////////////////////////////////////////
 
 //Состояние реле
-#define RELAY_ON 1
-#define RELAY_OFF 0
+#define RELAY_ON  true
+#define RELAY_OFF false
 
 //Режимы работы реле
-#define MODE_OFF 0    // - реле отключено
-#define MODE_ON 1    // - реле включено
-#define MODE_AUTO 2    // - работа с сенсорами(в автоматическом режиме)
+#define MODE_OFF  0     // - реле отключено
+#define MODE_ON   1     // - реле включено
+#define MODE_AUTO 2     // - работа с сенсорами(в автоматическом режиме)
+
+#define SERIALYZE_TYPE_CONFIG 0
+#define SERIALYZE_TYPE_STAT   1
 
 
 class Relay {
@@ -23,30 +26,30 @@ class Relay {
     void on();
     void off();
 
-
   public:
     int relay_pin;
     int relay_mode = MODE_OFF;
-    bool relay_state;
+    bool relay_state = RELAY_OFF;
     int relay_number_on_total = 0;               //счетчик общего количества включений реле
     unsigned int relay_work_time_total = 0;      //счетчик полного времени работы реле, мсек
     unsigned int max_delay_between_on_off = 0;   //максимальное время между включение и отключением реле, мсек
     unsigned int relay_delay_off = 4000;         //задержка отключения для датчика движения, мсек
 
-    Relay(int pin, int relay_mode);
-    void setMode(int pin);
+    Relay(int setPin, int setMode);
+    void setMode(int setMode);
     int getMode();
     void update();
     void atachPirSensor(int number, PirSensor *pirSensorPtr);
     void detachPirSensor(int number);
     bool readPirSensor(int number);
-    void serialize(DynamicJsonDocument *doc);
+    void serialize(DynamicJsonDocument *doc, int serializeDataType);
 };
 
 
 //* Relay Class Constructor
-Relay::Relay(int pin, int relay_mode) {
-  relay_pin = pin;
+Relay::Relay(int setPin, int setMode) {
+  relay_pin = setPin;
+  relay_mode = setMode;
   pinMode(relay_pin, OUTPUT);
   digitalWrite(relay_pin, relay_state);
 }
@@ -62,6 +65,7 @@ void Relay::on() {
   }
 }
 
+
 //Отключение реле
 void Relay::off() {
   if (relay_state != RELAY_OFF) {
@@ -76,9 +80,10 @@ void Relay::off() {
 
 
 //Установить режим работы реле
-void Relay::setMode(int mode) {
-  relay_mode = mode;
+void Relay::setMode(int setMode) {
+  relay_mode = setMode;
 }
+
 
 //Получить режим работы реле
 int Relay::getMode() {
@@ -87,17 +92,17 @@ int Relay::getMode() {
 
 
 void Relay::update() {
-  if (relay_mode == 0) {
+  if (relay_mode == MODE_OFF) {
     off();
-  } else if (relay_mode == 1) {
+  } else if (relay_mode == MODE_ON) {
     on();
   }
-  else if (relay_mode == 2) {
+  else if (relay_mode == MODE_AUTO) {
     bool result = false;
     if (pirSensor0Ptr != nullptr)  result = result | pirSensor0Ptr->read();
     if (pirSensor1Ptr != nullptr)  result = result | pirSensor1Ptr->read();
 
-    if (result) {
+    if (result==true) {
       on();
       ancillary_realay_delay_off = millis();
     }
@@ -106,7 +111,6 @@ void Relay::update() {
     }
   }
 }
-
 
 
 void Relay::atachPirSensor(int number, PirSensor *pirSensorPtr) {
@@ -119,6 +123,7 @@ void Relay::atachPirSensor(int number, PirSensor *pirSensorPtr) {
       break;
   }
 }
+
 
 void Relay::detachPirSensor(int number) {
   switch (number) {
@@ -136,18 +141,27 @@ bool Relay::readPirSensor(int number) {
   switch (number) {
     case 0:
       if (pirSensor0Ptr != nullptr)   return pirSensor0Ptr->read();
+      else return 0;
     case 1:
       if (pirSensor1Ptr != nullptr)   return pirSensor1Ptr->read();
+      else return 0;
   }
 }
 
 
-void  Relay::serialize(DynamicJsonDocument *doc) {
+void  Relay::serialize(DynamicJsonDocument *doc, int serializeDataType) {
   JsonObject obj = doc->createNestedObject("relay");
-  obj["relay_mode"] = relay_mode;
-  obj["relay_number_on_total"] = relay_number_on_total;
-  obj["relay_work_time_total"] = relay_work_time_total;
-  obj["pirSensor0Ptr"] = pirSensor0Ptr;
-  obj["pirSensor1Ptr"] = pirSensor1Ptr;
+  switch (serializeDataType) {
+    case SERIALYZE_TYPE_CONFIG:
+      obj["relay_mode"] = relay_mode;
+      if (pirSensor0Ptr != nullptr)   obj["pirSensor0Used"] = true;
+      else obj["pirSensor0Used"] = false;
+      if (pirSensor1Ptr != nullptr)   obj["pirSensor1Used"] = true;
+      else obj["pirSensor1Used"] = false;
+      break;
+    case SERIALYZE_TYPE_STAT:
+      obj["relay_number_on_total"] = relay_number_on_total;
+      obj["relay_work_time_total"] = relay_work_time_total;
+      break;
+  }
 }
-

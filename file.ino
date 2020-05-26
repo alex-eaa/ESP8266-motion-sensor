@@ -5,12 +5,12 @@ bool saveFile(char *filename)
   SPIFFS.remove(filename);
 
   DynamicJsonDocument doc(1024);
-  if (filename == FILE_CONFIG) {    
+  if (filename == FILE_CONFIG) {
     doc["delayOff"] = delayOff;
     doc["relayMode"] = relayMode;
     doc["sensor1Use"] = sensor1Use;
     doc["sensor2Use"] = sensor2Use;
-    
+
     doc["wifiAP_mode"] = wifiAP_mode;
     doc["static_IP"] = static_IP;
     doc["p_ssidAP"] = p_ssidAP;
@@ -18,7 +18,7 @@ bool saveFile(char *filename)
     doc["p_ssid"] = p_ssid;
     doc["p_password"] = p_password;
     doc["conIndic"] = conIndic;
-    
+
     JsonArray ipJsonArray = doc.createNestedArray("ip");
     for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
     JsonArray sbntJsonArray = doc.createNestedArray("sbnt");
@@ -28,6 +28,23 @@ bool saveFile(char *filename)
   } else if (filename == FILE_STAT) {
     doc["numbOn"] = numbOn;
     doc["timeRelayOn"] = timeRelayOn;
+  } else if (filename == NEW_FILE_CONFIG) {
+    //Настройки сети (страница setup.htm)
+    doc["wifiAP_mode"] = wifiAP_mode;
+    doc["p_ssidAP"] = p_ssidAP;
+    doc["p_passwordAP"] = p_passwordAP;
+    doc["p_ssid"] = p_ssid;
+    doc["p_password"] = p_password;
+    doc["static_IP"] = static_IP;
+    JsonArray ipJsonArray = doc.createNestedArray("ip");
+    for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
+    JsonArray sbntJsonArray = doc.createNestedArray("sbnt");
+    for (int n = 0; n < 4; n++)  sbntJsonArray.add(sbnt[n]);
+    JsonArray gtwJsonArray = doc.createNestedArray("gtw");
+    for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
+    relay.serialize(&doc, SERIALYZE_TYPE_CONFIG);
+  } else if (filename == NEW_FILE_STAT) {
+    relay.serialize(&doc, SERIALYZE_TYPE_STAT);
   }
 
   File file = SPIFFS.open(filename, "w");
@@ -36,6 +53,7 @@ bool saveFile(char *filename)
     return 0;
   }
   bool rezSerialization = serializeJson (doc, file);
+  serializeJson(doc, Serial);
   file.close();
 
   if (rezSerialization == 0)  Serial.print(F("Failed write to file: "));
