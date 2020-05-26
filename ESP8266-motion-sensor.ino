@@ -87,7 +87,6 @@ unsigned int delayOff = 20000;     //Задержка отключения, мс
 unsigned int startDelayOff = 0;    //вспом. для delayOff
 
 bool preRelayState;
-bool overflowControl = 0;     //Бит включающий контроль переполнения millis()
 
 //Statistic variables
 unsigned int numbOn = 0;                //количество включений
@@ -112,7 +111,8 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
 PirSensor pirSensor0(GPIO_BUTTON);
-Relay relay(GPIO_LED_WIFI);
+PirSensor pirSensor1(GPIO_BUTTON);
+Relay relay(GPIO_LED_WIFI, MODE_AUTO);
 int tm1, tm2;
 
 
@@ -166,18 +166,9 @@ void setup() {
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
 
-  relay.setMode(1);   
-  relay.update();  delay(300);
-  relay.setMode(0);  
-  relay.update();  delay(1000);
-  relay.setMode(1);   
-  relay.update();  delay(300);
-  relay.setMode(0);  
-  relay.update();  delay(1000);
-  relay.setMode(2);
   relay.update();
   relay.atachPirSensor(0, &pirSensor0);
-  relay.atachPirSensor(1, &pirSensor0);
+  //relay.atachPirSensor(1, &pirSensor0);
   tm1 = millis();
   tm2 = millis();
 
@@ -186,16 +177,37 @@ void setup() {
 
 
 void loop() {
-  if (millis() - tm1 > 2000) {
-    Serial.print("RELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
+  relay.update();
+  if (millis() - tm1 > 1000) {
+    Serial.print("\nRELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
     Serial.print("RELAY.readPirSensor(1) = ");      Serial.println(relay.readPirSensor(1));
+    Serial.print("RELAY.relay_state = ");      Serial.println(relay.relay_state);
+    Serial.print("RELAY.relay_mode = ");      Serial.println(relay.relay_mode);
+    Serial.print("RELAY.relay_number_on_total = ");      Serial.println(relay.relay_number_on_total);
+    Serial.print("RELAY.relay_work_time_total = ");      Serial.println(relay.relay_work_time_total);
+    Serial.print("RELAY.max_delay_between_on_off = ");      Serial.println(relay.max_delay_between_on_off);
     tm1 = millis();
-    relay.update();
   }
 
   if (millis() - tm2 > 10000) {
-    Serial.print("relay.detachPirSensor(1) "); 
-    relay.detachPirSensor(1);
+    DynamicJsonDocument doc(1024);
+    //Настройки сети (страница setup.htm)
+    doc["wifiAP_mode"] = wifiAP_mode;
+    doc["p_ssidAP"] = p_ssidAP;
+    doc["p_passwordAP"] = p_passwordAP;
+    doc["p_ssid"] = p_ssid;
+    doc["p_password"] = p_password;
+    doc["static_IP"] = static_IP;
+    JsonArray ipJsonArray = doc.createNestedArray("ip");
+    for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
+    JsonArray sbntJsonArray = doc.createNestedArray("sbnt");
+    for (int n = 0; n < 4; n++)  sbntJsonArray.add(sbnt[n]);
+    JsonArray gtwJsonArray = doc.createNestedArray("gtw");
+    for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
+    //Состояние реле
+    relay.serialize(&doc);
+
+    serializeJson(doc, Serial);
     tm2 = millis();
   }
 
@@ -299,19 +311,6 @@ void loop() {
   if (millis() - startTimeSaveStat > timeSaveStat) {
     saveFile(FILE_STAT);
     startTimeSaveStat = millis();
-  }
-
-  //Контроль переполнения таймера millis
-  //Устанавливаем бит контроля переполнения таймера millis, при достижении им 4.200.000.000 из 4.294.967.296
-  if (overflowControl == 0 && millis() > 4294000000) {
-    overflowControl = 1;
-  }
-  //Если произошло переполнение millis
-  if (overflowControl == 1 && millis() > 0 && millis() < 10000) {
-    overflowControl = 0;
-    startTimeSaveStat = millis();
-    startTimeESPOn = millis();
-    startTimeRelayOn = millis();
   }
 
 }

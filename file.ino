@@ -5,11 +5,12 @@ bool saveFile(char *filename)
   SPIFFS.remove(filename);
 
   DynamicJsonDocument doc(1024);
-  if (filename == FILE_CONFIG) {
+  if (filename == FILE_CONFIG) {    
     doc["delayOff"] = delayOff;
     doc["relayMode"] = relayMode;
     doc["sensor1Use"] = sensor1Use;
     doc["sensor2Use"] = sensor2Use;
+    
     doc["wifiAP_mode"] = wifiAP_mode;
     doc["static_IP"] = static_IP;
     doc["p_ssidAP"] = p_ssidAP;
@@ -17,6 +18,7 @@ bool saveFile(char *filename)
     doc["p_ssid"] = p_ssid;
     doc["p_password"] = p_password;
     doc["conIndic"] = conIndic;
+    
     JsonArray ipJsonArray = doc.createNestedArray("ip");
     for (int n = 0; n < 4; n++)  ipJsonArray.add(ip[n]);
     JsonArray sbntJsonArray = doc.createNestedArray("sbnt");

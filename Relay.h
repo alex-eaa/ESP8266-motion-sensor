@@ -3,8 +3,8 @@
 /////////////////////////////////////////////////////////////////////////
 
 //Состояние реле
-#define ON 1
-#define OFF 0
+#define RELAY_ON 1
+#define RELAY_OFF 0
 
 //Режимы работы реле
 #define MODE_OFF 0    // - реле отключено
@@ -14,7 +14,6 @@
 
 class Relay {
   private:
-    bool relay_state = OFF;
     unsigned int ancillary_relay_work_time_total;   //вспом. переменная для счетчик полного времени работы реле
     unsigned int ancillary_realay_delay_off;        //вспом. переменная для задержка отключения для датчика движения
     PirSensor *pirSensor0Ptr = nullptr;
@@ -28,24 +27,25 @@ class Relay {
   public:
     int relay_pin;
     int relay_mode = MODE_OFF;
+    bool relay_state;
     int relay_number_on_total = 0;               //счетчик общего количества включений реле
-    unsigned int relay_work_time_total = 0;      //счетчик полного времени работы реле, cек
+    unsigned int relay_work_time_total = 0;      //счетчик полного времени работы реле, мсек
+    unsigned int max_delay_between_on_off = 0;   //максимальное время между включение и отключением реле, мсек
     unsigned int relay_delay_off = 4000;         //задержка отключения для датчика движения, мсек
 
-    Relay(int);
-    void toggle();
-    bool getState();
-    void setMode(int);
+    Relay(int pin, int relay_mode);
+    void setMode(int pin);
     int getMode();
     void update();
     void atachPirSensor(int number, PirSensor *pirSensorPtr);
     void detachPirSensor(int number);
     bool readPirSensor(int number);
+    void serialize(DynamicJsonDocument *doc);
 };
 
 
 //* Relay Class Constructor
-Relay::Relay(int pin) {
+Relay::Relay(int pin, int relay_mode) {
   relay_pin = pin;
   pinMode(relay_pin, OUTPUT);
   digitalWrite(relay_pin, relay_state);
@@ -54,9 +54,9 @@ Relay::Relay(int pin) {
 
 //Включение реле
 void Relay::on() {
-  if (relay_state != ON) {
-    relay_state = ON;
+  if (relay_state != RELAY_ON) {
     digitalWrite(relay_pin, relay_state);
+    relay_state = RELAY_ON;
     ancillary_relay_work_time_total = millis();
     relay_number_on_total ++;
   }
@@ -64,23 +64,16 @@ void Relay::on() {
 
 //Отключение реле
 void Relay::off() {
-  if (relay_state != OFF) {
-    relay_state = OFF;
+  if (relay_state != RELAY_OFF) {
     digitalWrite(relay_pin, relay_state);
-    relay_work_time_total += (millis() - ancillary_relay_work_time_total) / 1000;
+    relay_state = RELAY_OFF;
+    relay_work_time_total += (millis() - ancillary_relay_work_time_total);
+    if (max_delay_between_on_off < (millis() - ancillary_relay_work_time_total)) {
+      max_delay_between_on_off = (millis() - ancillary_relay_work_time_total);
+    }
   }
 }
 
-//Инвертировать состояние реле
-void Relay::toggle() {
-  if (relay_state == ON)    off();
-  else if (relay_state == OFF)    on();
-}
-
-//Получение состояния реле
-bool Relay::getState() {
-  return relay_state;
-}
 
 //Установить режим работы реле
 void Relay::setMode(int mode) {
@@ -99,13 +92,18 @@ void Relay::update() {
   } else if (relay_mode == 1) {
     on();
   }
-  else {
+  else if (relay_mode == 2) {
     bool result = false;
     if (pirSensor0Ptr != nullptr)  result = result | pirSensor0Ptr->read();
     if (pirSensor1Ptr != nullptr)  result = result | pirSensor1Ptr->read();
 
-    if (result) on();
-    else off();
+    if (result) {
+      on();
+      ancillary_realay_delay_off = millis();
+    }
+    else if (millis() - ancillary_realay_delay_off > relay_delay_off) {
+      off();
+    }
   }
 }
 
@@ -142,3 +140,14 @@ bool Relay::readPirSensor(int number) {
       if (pirSensor1Ptr != nullptr)   return pirSensor1Ptr->read();
   }
 }
+
+
+void  Relay::serialize(DynamicJsonDocument *doc) {
+  JsonObject obj = doc->createNestedObject("relay");
+  obj["relay_mode"] = relay_mode;
+  obj["relay_number_on_total"] = relay_number_on_total;
+  obj["relay_work_time_total"] = relay_work_time_total;
+  obj["pirSensor0Ptr"] = pirSensor0Ptr;
+  obj["pirSensor1Ptr"] = pirSensor1Ptr;
+}
+
