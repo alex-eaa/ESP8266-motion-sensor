@@ -51,6 +51,7 @@
 #define TIME_NTP_OFFSET 10800           //время смещения часового пояса, сек (10800 = +3 часа)
 #define TIME_NTP_UPDATE_INTERVAL 300000 //время синхронизации времени с NTP, мс (300000 = 5 мин)
 #define NTP_SERVER "pool.ntp.org"       //адрес NTP сервера
+#define PERIOD_SAVE_STAT 43200000       //периодичность сохранения статистики, мс
 
 bool wifiAP_mode = 0;
 char *mqtt_server = "srv1.mqtt.4api.ru";
@@ -72,7 +73,7 @@ char *p_passwordAP = new char[0];
 //char *p_ssidAP = p_ssidAP = "AP_ESP8266";             //SSID-имя вашей сети
 //char *p_passwordAP = "12345678";
 
-bool conIndic = 0;  //бит работы индикатора соединения, 1-вкл. 0-откл., данные отправляются каждые 2000 мс
+//bool conIndic = 0;  //бит работы индикатора соединения, 1-вкл. 0-откл., данные отправляются каждые 2000 мс
 
 bool sendSpeedDataEnable[] = {0, 0, 0, 0, 0};
 String ping = "ping";
@@ -97,11 +98,9 @@ unsigned int startTimeRelayOn = 0;      //вспом. для timeRelayOn
 unsigned int mdTimeRelayOn = 0;         //максимальный промежуток времени включеного реле, мс
 double timeESPOn = 0;                   //время с момента включения устройства, мс
 int startTimeESPOn = 0;                 //вспом. для timeESPOn
-unsigned int timeSaveStat = 43200000;   //периодичность сохранения статистики, мс
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
 unsigned int startMqttReconnectTime = 0;  //вспом. для отсчета времени переподключения к mqtt
 
-bool flagSaveRstFile = false;
 
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
@@ -113,7 +112,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, NTP_SERVER, TIME_NTP_OFFSET, TIME_NTP_UPDATE_INTERVAL);
 
 PirSensor pirSensor0(GPIO_BUTTON);
-//PirSensor pirSensor1(GPIO_SENSOR2);
+PirSensor pirSensor1(GPIO_BUTTON);
 Relay relay(GPIO_LED_WIFI, MODE_AUTO);
 int tm1, tm2;
 
@@ -138,8 +137,12 @@ void setup() {
   //scanAllFile();
   //printFile(FILE_CONFIG);
   //printFile(FILE_STAT);
+  printFile(NEW_FILE_STAT);
+  printFile(NEW_FILE_CONFIG);
 
   loadFile(FILE_STAT);
+  loadFile(NEW_FILE_STAT);
+  loadFile(NEW_FILE_CONFIG);
 
   //Запуск точки доступа с параметрами поумолчанию
   if ( !loadFile(FILE_CONFIG) ||  digitalRead(GPIO_BUTTON) == 0)  startAp(DEFAULT_AP_NAME, DEFAULT_AP_PASS);
@@ -168,7 +171,7 @@ void setup() {
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
 
-  relay.update();
+  //relay.update();
   relay.atachPirSensor(0, &pirSensor0);
   //relay.atachPirSensor(1, &pirSensor0);
   tm1 = millis();
@@ -180,35 +183,23 @@ void setup() {
 void loop() {
   relay.update();
   if (millis() - tm1 > 1000) {
-    Serial.print("RELAY.readPirSensor(0) = ");      Serial.println(relay.readPirSensor(0));
-    Serial.print("RELAY.readPirSensor(1) = ");      Serial.println(relay.readPirSensor(1));
-    Serial.print("RELAY.relay_state = ");      Serial.println(relay.relay_state);
-    Serial.print("RELAY.relay_mode = ");      Serial.println(relay.relay_mode);
-    Serial.print("RELAY.relay_number_on_total = ");      Serial.println(relay.relay_number_on_total);
-    Serial.print("RELAY.relay_work_time_total = ");      Serial.println(relay.relay_work_time_total);
-    Serial.print("RELAY.max_delay_between_on_off = ");      Serial.println(relay.max_delay_between_on_off);
-    
+    Serial.print("\nRELAY.readPirSensor(0) = ");          Serial.println(relay.readPirSensor(0));
+    Serial.print("RELAY.readPirSensor(1) = ");            Serial.println(relay.readPirSensor(1));
+    Serial.print("RELAY.state = ");                 Serial.println(relay.state);
+    Serial.print("RELAY.mode = ");                  Serial.println(relay.mode);
+    Serial.print("RELAY.sumSwitchingOn = ");       Serial.println(relay.sumSwitchingOn);
+    Serial.print("RELAY.totalTimeOn = ");       Serial.println(relay.totalTimeOn);
+    Serial.print("RELAY.maxContinuousOn = ");    Serial.println(relay.maxContinuousOn);
     tm1 = millis();
   }
 
-  if (millis() - tm2 > 10000) {
- 
-    tm2 = millis();
-  }
 
-
-  //wifi_init();
+  wifi_init();
   webSocket.loop();
   server.handleClient();
   MDNS.update();
   mqttConnect();
   if (WiFi.status() == WL_CONNECTED)  timeClient.update();
-
-  //Сохраняем в файл rst время и причину перезапуска при запуске контроллера
-  if (!flagSaveRstFile && timeClient.getEpochTime() > 100000000) {
-    saveRstInfoToFile();
-    flagSaveRstFile = true;
-  }
 
 
   //Обработка состояния сенсоров
@@ -293,8 +284,9 @@ void loop() {
   }
 
   //Сохранение stat данных в файл с периодичностью timeSaveStat
-  if (millis() - startTimeSaveStat > timeSaveStat) {
+  if (millis() - startTimeSaveStat > PERIOD_SAVE_STAT) {
     saveFile(FILE_STAT);
+    saveFile(NEW_FILE_STAT);
     startTimeSaveStat = millis();
   }
 

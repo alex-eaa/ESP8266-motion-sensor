@@ -1,17 +1,23 @@
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
-  doc["delayOff"] = delayOff;
-  doc["relayMode"] = relayMode;
-  doc["sensor1Use"] = sensor1Use;
-  doc["sensor2Use"] = sensor2Use;
-  doc["relayState"] = relayState;
-  doc["sensor1State"] = sensor1State;
-  doc["sensor2State"] = sensor2State;
-  doc["numbOn"] = numbOn;
-  doc["timeRelayOn"] = timeRelayOn;
-  doc["mdTimeRelayOn"] = mdTimeRelayOn;
+  relay.serialize(&doc, SERIALYZE_TYPE_FOR_INDEX);
+  doc["sensor0State"] = pirSensor0.read();
+  doc["sensor1State"] = pirSensor1.read();
   doc["timeESPOn"] = timeESPOn;
+  
+  //doc["delayOff"] = delayOff;
+  //doc["relayMode"] = relayMode;
+  //doc["sensor1Use"] = sensor1Use;
+  //doc["sensor2Use"] = sensor2Use;
+  //doc["relayState"] = relayState;
+  //doc["sensor1State"] = sensor1State;
+  //doc["sensor2State"] = sensor2State;
+  //doc["numbOn"] = numbOn;
+  //doc["timeRelayOn"] = timeRelayOn;
+  //doc["mdTimeRelayOn"] = mdTimeRelayOn;
+  //doc["timeESPOn"] = timeESPOn;
+  
   String output = "";
   serializeJson(doc, output);
   return output;
@@ -33,7 +39,7 @@ String serializationToJson_setup()
   for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["static_IP"] = static_IP;
-  doc["conIndic"] = conIndic;
+  
   String output = "";
   serializeJson(doc, output);
   return output;
@@ -52,10 +58,12 @@ void deserealizationFromJson(const String &json) {
     relayMode = doc["relayMode"];        //Serial.println(relayMode);
     sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1Use);
     sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2Use);
-    
+
     saveFile(FILE_CONFIG);
     saveFile(FILE_STAT);
-    
+    saveFile(NEW_FILE_CONFIG);
+    saveFile(NEW_FILE_STAT);
+
     dataUpdateBit = 1;
   }
   else if (doc["page"].as<String>() == "setup") {
@@ -102,11 +110,13 @@ void deserealizationFromJson(const String &json) {
     gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
-    conIndic = doc["conIndic"];        //Serial.println(conIndic);
-    
+    //conIndic = doc["conIndic"];        //Serial.println(conIndic);
+
     saveFile(FILE_CONFIG);
     saveFile(FILE_STAT);
-    
+    saveFile(NEW_FILE_CONFIG);
+    saveFile(NEW_FILE_STAT);
+
     sendToMqttServer(serializationToJson_setup());
   }
 }
