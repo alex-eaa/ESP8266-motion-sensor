@@ -36,15 +36,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("[%u] get from WS: %s\n", num, payload);
 
         if (strcmp((char *)payload, "RESET") == 0) {
-          saveFile(FILE_CONFIG);
-          saveFile(FILE_STAT);
+          saveFile(FILE_RELAY);
           delay(50);
           ESP.reset();
         }
         else if (strcmp((char *)payload, "RESETSTAT") == 0) {
-          SPIFFS.remove(FILE_STAT);
-          delay(500);
-          ESP.reset();
+          relay.resetStat();
+          saveFile(FILE_RELAY);
         }
         else {
           deserealizationFromJson((char *)payload);

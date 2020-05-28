@@ -5,7 +5,7 @@ var mqttPort=9123;
 var mqttUser="user_889afb72";
 var mqttPass="pass_7c9ca39a";
 var mqttPrefix="user_889afb72";
-var mqttDevName="esplink_ms_1adffc";
+var mqttDevName="esplink_ms_fb47d";
 
 var mqttState = 0;
 var wsState = 0;
@@ -160,6 +160,15 @@ function receivedDataProcessing(strJson){
 				dataSend[x]=obj[x];
 			}
 		}
+
+		for (x in obj["relay"]) {
+			if (data[x]!=null) {
+				data[x]=obj["relay"][x];
+			} else if (dataSend[x]!=null) {
+				dataSend[x]=obj["relay"][x];
+			}
+		}
+
 		updateAllPage();
 		setIndicConnect();
 	} catch (e) {
@@ -178,7 +187,6 @@ function setDeviceIp(setIp){
 	console.log('deviceIp=', deviceIp);
 }
 
-//let IPAdress = "192.168.43.159"; 
 if (location.host) {
 	setDeviceIp(location.host);
 	startConControl();

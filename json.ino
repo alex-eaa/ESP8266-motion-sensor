@@ -1,23 +1,11 @@
 String serializationToJson_index()
 {
   DynamicJsonDocument doc(1024);
-  relay.serialize(&doc, SERIALYZE_TYPE_FOR_INDEX);
+  relay.serialize(&doc, SERIALYZE_ALL);
   doc["sensor0State"] = pirSensor0.read();
   doc["sensor1State"] = pirSensor1.read();
   doc["timeESPOn"] = timeESPOn;
-  
-  //doc["delayOff"] = delayOff;
-  //doc["relayMode"] = relayMode;
-  //doc["sensor1Use"] = sensor1Use;
-  //doc["sensor2Use"] = sensor2Use;
-  //doc["relayState"] = relayState;
-  //doc["sensor1State"] = sensor1State;
-  //doc["sensor2State"] = sensor2State;
-  //doc["numbOn"] = numbOn;
-  //doc["timeRelayOn"] = timeRelayOn;
-  //doc["mdTimeRelayOn"] = mdTimeRelayOn;
-  //doc["timeESPOn"] = timeESPOn;
-  
+
   String output = "";
   serializeJson(doc, output);
   return output;
@@ -39,7 +27,7 @@ String serializationToJson_setup()
   for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["static_IP"] = static_IP;
-  
+
   String output = "";
   serializeJson(doc, output);
   return output;
@@ -54,26 +42,21 @@ void deserealizationFromJson(const String &json) {
     Serial.println(F("Failed to deserialization data from client"));
   }
   else if (doc["page"].as<String>() == "index") {
-    delayOff = doc["delayOff"];          //Serial.println(delayOff);
-    relayMode = doc["relayMode"];        //Serial.println(relayMode);
-    sensor1Use = doc["sensor1Use"];      //Serial.println(sensor1Use);
-    sensor2Use = doc["sensor2Use"];      //Serial.println(sensor2Use);
-
-    saveFile(FILE_CONFIG);
-    saveFile(FILE_STAT);
-    saveFile(NEW_FILE_CONFIG);
-    saveFile(NEW_FILE_STAT);
-
-    dataUpdateBit = 1;
+    relay.delayOff = doc["delayOff"];
+    relay.relayMode = doc["relayMode"];
+    if (doc["sensor0Use"])   relay.atachPirSensor(0, &pirSensor0);
+    else relay.detachPirSensor(0);
+    if (doc["sensor1Use"])   relay.atachPirSensor(1, &pirSensor1);
+    else relay.detachPirSensor(1);
+    relay.dataUpdateBit = 1;
+    saveFile(FILE_RELAY);
   }
   else if (doc["page"].as<String>() == "setup") {
-
     delete[] p_passwordAP;
     delete[] p_ssidAP;
     delete[] p_password;
     delete[] p_ssid;
 
-    //int t1 = micros();
     String stemp = doc["p_ssid"].as<String>();
     p_ssid = new char [stemp.length() + 1];
     stemp.toCharArray(p_ssid, stemp.length() + 1);
@@ -89,12 +72,6 @@ void deserealizationFromJson(const String &json) {
     stemp = doc["p_passwordAP"].as<String>();
     p_passwordAP = new char [stemp.length() + 1];
     stemp.toCharArray(p_passwordAP, stemp.length() + 1);
-    //int t2 = micros();   Serial.print(F("t2-t1="));   Serial.println(t2 - t1);
-
-    //Serial.print(F("p_ssid="));         Serial.println(p_ssid);
-    //Serial.print(F("p_password="));     Serial.println(p_password);
-    //Serial.print(F("p_ssidAP="));       Serial.println(p_ssidAP);
-    //Serial.print(F("p_passwordAP="));   Serial.println(p_passwordAP);
 
     ip[0] = doc["ip"][0];    //Serial.println(ip[0]);
     ip[1] = doc["ip"][1];    //Serial.println(ip[1]);
@@ -110,13 +87,10 @@ void deserealizationFromJson(const String &json) {
     gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
-    //conIndic = doc["conIndic"];        //Serial.println(conIndic);
 
-    saveFile(FILE_CONFIG);
-    saveFile(FILE_STAT);
-    saveFile(NEW_FILE_CONFIG);
-    saveFile(NEW_FILE_STAT);
+    saveFile(FILE_NETWORK);
 
     sendToMqttServer(serializationToJson_setup());
+
   }
 }

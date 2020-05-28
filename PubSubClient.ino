@@ -10,8 +10,8 @@ void mqtt_init() {
 }
 
 
-void mqttConnect(){
-    if (mqtt.connected()) {
+void mqttConnect() {
+  if (mqtt.connected()) {
     mqtt.loop();
     //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 5 сек
   } else if (!mqtt.connected() && WiFi.status() == WL_CONNECTED && millis() - startMqttReconnectTime > TIME_ATTEMP_CON_MQTT) {
@@ -31,15 +31,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
     sendToMqttServer(serializationToJson_setup());
   }
   else if (stream.str() == "RESET") {
-    saveFile(FILE_CONFIG);
-    saveFile(FILE_STAT);
-    delay(100);
+    saveFile(FILE_RELAY);
+    delay(50);
     ESP.reset();
   }
   else if (stream.str() == "RESETSTAT") {
-    SPIFFS.remove(FILE_STAT);
-    delay(500);
-    ESP.reset();
+    relay.resetStat();
+    saveFile(FILE_RELAY);
   }
   else {
     deserealizationFromJson(stream.str());

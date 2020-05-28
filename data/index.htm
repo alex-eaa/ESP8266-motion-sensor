@@ -280,11 +280,11 @@ margin:0;
 		<tr>
 			<td>
 				<div id="btn1">
-				    <div class="sensors" id="sensor1State"></div>
+				    <div class="sensors" id="sensor0State"></div>
 				</div>
 				<br />
 				<div id="btn2">
-				    <div class="sensors" id="sensor2State"></div>
+				    <div class="sensors" id="sensor1State"></div>
 				</div>
 			</td>
 			<td>
@@ -316,11 +316,11 @@ margin:0;
   	<div class="flex-item">
   		<h3>Задействовать<br />датчики</h3>
 		<label>
-    		<input type="checkbox" id="sensor1Use"  class="option-input checkbox" onchange="startSendData('JSON')"/>
+    		<input type="checkbox" id="sensor0Use"  class="option-input checkbox" onchange="startSendData('JSON')"/>
     		Датчик 1
   		</label>
 		<label>
-			<input type="checkbox" id="sensor2Use" class="option-input checkbox" onchange="startSendData('JSON')"/>
+			<input type="checkbox" id="sensor1Use" class="option-input checkbox" onchange="startSendData('JSON')"/>
 		  	Датчик 2
 		</label>
   	</div>
@@ -335,10 +335,10 @@ margin:0;
 
 <div class="content">
 	<h3>Статистика</h3>
-	<h4>Количество включений: <span id="numbOn"></span></h4>
-	<h4>Суммарное время работы освещения: <span id="timeRelayOn"></span></h4>
+	<h4>Количество включений: <span id="sumSwitchingOn"></span></h4>
+	<h4>Суммарное время работы освещения: <span id="totalTimeOn"></span></h4>
 	<hr>
-	<h4>Максимальное время непрерывной работы освещения: <span id="mdTimeRelayOn"></span></h4>
+	<h4>Максимальное время непрерывной работы освещения: <span id="maxContinuousOn"></span></h4>
 	<h4>Время работы после включения: <span id="timeESPOn"></span></h4>
 
 </div>
@@ -348,34 +348,34 @@ margin:0;
 //Скрипт для Android приложения
 let dataSend = {
 	page: "index",
-	relayMode: 2,
+	relayMode: 0,
+	sensor0Use: true,
 	sensor1Use: false,
-	sensor2Use: false,
 	delayOff: 10000
 };
 let data = {
 	page: "index",
 	relayState: false,
+	sensor0State: false,
 	sensor1State: false,
-	sensor2State: false,
-	numbOn: 0,
-	timeRelayOn: 0,
-	mdTimeRelayOn: 0,
+	sumSwitchingOn: 0,
+	totalTimeOn: 0,
+	maxContinuousOn: 0,
 	timeESPOn: 0
 };
 
 
 function updateAllPage() {
-	document.getElementById("relayState").classList.toggle('checked', data["relayState"]);
+	document.getElementById("relayState").classList.toggle('checked', !data["relayState"]);
+	document.getElementById("sensor0State").classList.toggle('checked', data["sensor0State"]);
 	document.getElementById("sensor1State").classList.toggle('checked', data["sensor1State"]);
-	document.getElementById("sensor2State").classList.toggle('checked', data["sensor2State"]);
 	document.getElementById("delayOff").value = dataSend["delayOff"]/1000;
+	document.getElementById("sensor0Use").checked = dataSend["sensor0Use"];
 	document.getElementById("sensor1Use").checked = dataSend["sensor1Use"];
-	document.getElementById("sensor2Use").checked = dataSend["sensor2Use"];
 	document.getElementsByName('relayMode')[dataSend["relayMode"]].checked = true;
-	document.getElementById("numbOn").innerHTML = data["numbOn"];
-	document.getElementById("timeRelayOn").innerHTML = millisToTime(data["timeRelayOn"]);
-	document.getElementById("mdTimeRelayOn").innerHTML = millisToTime(data["mdTimeRelayOn"]);
+	document.getElementById("sumSwitchingOn").innerHTML = data["sumSwitchingOn"];
+	document.getElementById("totalTimeOn").innerHTML = millisToTime(data["totalTimeOn"]);
+	document.getElementById("maxContinuousOn").innerHTML = millisToTime(data["maxContinuousOn"]);
 	document.getElementById("timeESPOn").innerHTML = millisToTime(data["timeESPOn"]);
 };
 
@@ -391,8 +391,8 @@ function millisToTime(millis){
 
 function updateDataForSend() {
 	dataSend["delayOff"] = document.getElementById("delayOff").value*1000;
+	dataSend["sensor0Use"] = document.getElementById("sensor0Use").checked;
 	dataSend["sensor1Use"] = document.getElementById("sensor1Use").checked;
-	dataSend["sensor2Use"] = document.getElementById("sensor2Use").checked;
 	let mode = document.getElementsByName('relayMode');
 	for (var i=0; i<mode.length; i++) {
         if (mode[i].checked) {

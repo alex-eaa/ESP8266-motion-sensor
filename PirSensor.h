@@ -14,6 +14,7 @@ class PirSensor {
 
   public:
     int pin;
+    bool dataUpdateBit = 0;    //флаг обновления данных, устанавливается когда состояние датчика изменилось и нужно отправить их клиенту
 
   public:
     PirSensor(int setPin);
@@ -37,6 +38,7 @@ void PirSensor::update() {
   if (newstate != state) {
     if (millis() - prevTimeBounce > timeBounce) {
       state = newstate;
+      dataUpdateBit = 1;
       prevTimeBounce = millis();
     }
   } else {
