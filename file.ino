@@ -5,7 +5,7 @@ bool saveFile(char *filename)
   SPIFFS.remove(filename);
 
   DynamicJsonDocument doc(1024);
-  
+
   if (filename == FILE_NETWORK) {
     doc["wifiAP_mode"] = wifiAP_mode;
     doc["p_ssidAP"] = p_ssidAP;
@@ -30,7 +30,9 @@ bool saveFile(char *filename)
     return 0;
   }
   bool rezSerialization = serializeJson (doc, file);
+#ifdef DEBUG
   serializeJson(doc, Serial);
+#endif
   file.close();
 
   if (rezSerialization == 0)  Serial.print(F("Failed write to file: "));

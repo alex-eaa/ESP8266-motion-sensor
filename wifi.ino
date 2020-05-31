@@ -11,6 +11,7 @@ void wifi_init()
 {
   //Разовое сообщение при подключении к точке доступа WIFI
   if (WiFi.status() == WL_CONNECTED && wlConnectedMsgSend == 0) {
+#ifdef DEBUG
     Serial.println(F("\nCONNECTED to WiFi AP!"));
     Serial.print(F("My IP address: "));   Serial.println(WiFi.localIP());
     Serial.print(F("Subnet mask: "));     Serial.println(WiFi.subnetMask());
@@ -19,6 +20,7 @@ void wifi_init()
     Serial.print(F("My default hostname: "));   Serial.println(WiFi.hostname());
     Serial.print(F("Connected to AP with SSID: "));       Serial.println(WiFi.SSID());
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
+#endif
     startMDNS();
     timeClient.begin();
     wlConnectedMsgSend = 1;
@@ -47,18 +49,22 @@ void wifi_init()
 //Функция запуска модуля в режиме AP
 void startAp(char *ap_ssid, const char *ap_password)
 {
+#ifdef DEBUG
   Serial.println(F("\n\nSTART ESP in AP WIFI mode"));
+#endif
   if (WiFi.getPersistent() == true)    WiFi.persistent(false);   //disable saving wifi config into SDK flash area
   WiFi.disconnect();
   WiFi.softAP(ap_ssid, ap_password);
   WiFi.persistent(true);                                      //enable saving wifi config into SDK flash area
   wifiAP_runned = 1;
   startMDNS();
+#ifdef DEBUG
   Serial.print(F("SSID AP: "));      Serial.println(ap_ssid);
   Serial.print(F("Password AP: "));  Serial.println(ap_password);
   Serial.print(F("Start AP with SSID: "));       Serial.println(WiFi.softAPSSID());
   Serial.print(F("Soft-AP IP: "));   Serial.println(WiFi.softAPIP());
   Serial.print(F("Soft-AP MAC: "));  Serial.println(WiFi.softAPmacAddress());
+#endif
 
 }
 
@@ -70,7 +76,9 @@ void set_staticIP()
   IPAddress gateway(gtw[0], gtw[1], gtw[2], gtw[3]);
   IPAddress subnet(sbnt[0], sbnt[1], sbnt[2], sbnt[3]);
   WiFi.config(ipAdr, gateway, gateway, subnet);          //второй параметр установка DNS
+#ifdef DEBUG
   Serial.println(F("Set static ip, sbnt, gtw."));
+#endif
 }
 
 
@@ -80,11 +88,17 @@ void startMDNS() {
   //Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsNameStr);
   char mdnsName[mdnsNameStr.length()];
   mdnsNameStr.toCharArray(mdnsName, mdnsNameStr.length() + 1);
+#ifdef DEBUG
   Serial.print(F("Host name for mDNS: "));        Serial.println(mdnsName);
+#endif
   if (!MDNS.begin(mdnsName)) {
+#ifdef DEBUG
     Serial.println(F("Error setting up MDNS responder!"));
+#endif
   } else {
+#ifdef DEBUG
     Serial.println(F("mDNS responder started"));
+#endif
     MDNS.addService("http", "tcp", 80);
     //MDNS.addService("ws", "tcp", 81);
   }

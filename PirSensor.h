@@ -48,7 +48,7 @@ void PirSensor::update() {
 
 //Считывание состояния датчика pirs
 bool PirSensor::read() {
-  update();
+  //update();
   if (state)   return SENSOR_ON;
   else   return SENSOR_OFF;
 }

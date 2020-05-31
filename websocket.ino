@@ -13,14 +13,18 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
     case WStype_DISCONNECTED:
       sendSpeedDataEnable[num] = 0;
+#ifdef DEBUG
       Serial.printf("[%u] Disconnected!\n", num);
+#endif
       //Serial.printf("WStype_DISCONNECTED sendSpeedDataEnable [%u][%u][%u][%u][%u]\n", sendSpeedDataEnable[0], sendSpeedDataEnable[1], sendSpeedDataEnable[2], sendSpeedDataEnable[3], sendSpeedDataEnable[4]);
       break;
 
     case WStype_CONNECTED:
       {
         IPAddress ip = webSocket.remoteIP(num);
+#ifdef DEBUG
         Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+#endif
         if (strcmp((char *)payload, "/index.htm") == 0) {
           sendSpeedDataEnable[num] = 1;
           sendToWsClient(num, serializationToJson_index());
@@ -33,8 +37,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
     case WStype_TEXT:
       {
+#ifdef DEBUG
         Serial.printf("[%u] get from WS: %s\n", num, payload);
-
+#endif
         if (strcmp((char *)payload, "RESET") == 0) {
           saveFile(FILE_RELAY);
           delay(50);
@@ -51,7 +56,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       }
 
     case WStype_BIN:
-      Serial.printf("[%u] get binary length: %u\n", num, length);
+      //Serial.printf("[%u] get binary length: %u\n", num, length);
       hexdump(payload, length);
       // send message to client
       // webSocket.sendBIN(num, payload, length);

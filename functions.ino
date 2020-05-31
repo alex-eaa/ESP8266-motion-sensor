@@ -63,6 +63,7 @@ void saveRstInfoToFile() {
 
 
 
+
 void saveTimeOnRelay() {
   String filename = "/inout.txt";
   //SPIFFS.remove(filename);
@@ -91,4 +92,3 @@ String getDataTimeStr() {
   data_time += String(timeClient.getFormattedTime());
   return data_time;
 }
-

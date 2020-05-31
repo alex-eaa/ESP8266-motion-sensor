@@ -13,6 +13,7 @@
     - GPIO13 (D7) - синий цвет RGB-светодиода (для платы типа ESP8266 Witty);
     - GPIO15 (D8) - красный цвет RGB-светодиода (для платы типа ESP8266 Witty).
 */
+//#define DEBUG
 
 #include <FS.h>
 #include <ESP8266WiFi.h>
@@ -82,8 +83,6 @@ int startTimeESPOn = 0;                 //вспом. для timeESPOn
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
 
 
-int tm1;
-
 WebSocketsServer webSocket(81);
 ESP8266WebServer server(80);
 WiFiClient espClient;
@@ -100,21 +99,20 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n");
   pinMode(GPIO_LED_WIFI, OUTPUT);
-  pinMode(GPIO_LED_GREEN, OUTPUT);
   pinMode(GPIO_BUTTON, INPUT_PULLUP);
   pinMode(GPIO_SENSOR1, INPUT_PULLUP);
   pinMode(GPIO_SENSOR2, INPUT_PULLUP);
   pinMode(GPIO_RELAY, OUTPUT);
   digitalWrite(GPIO_LED_WIFI, HIGH);
-  digitalWrite(GPIO_LED_GREEN, LOW);
   digitalWrite(GPIO_RELAY, 1);
 
-  //printChipInfo();
-
   SPIFFS.begin();
+#ifdef DEBUG
+  printChipInfo();
   scanAllFile();
   printFile(FILE_RELAY);
   printFile(FILE_NETWORK);
+#endif
 
   loadFile(FILE_RELAY);
 
@@ -141,26 +139,18 @@ void setup() {
   webSocket_init();      //инициализация webSocket сервера
   mqtt_init();           //инициализация mqtt клиента
 
+  relay.addFun(saveTimeOnRelay);
+
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
-
-  tm1 = millis();
 }
 
 
 
 void loop() {
-  if (millis() - tm1 > 1000) {
-    //Serial.print("\nRELAY.readPirSensor(0) = ");          Serial.println(relay.readPirSensor(0));
-    //Serial.print("RELAY.readPirSensor(1) = ");            Serial.println(relay.readPirSensor(1));
-    //Serial.print("RELAY.relayState = ");                 Serial.println(relay.relayState);
-    //Serial.print("RELAY.relayMode = ");                  Serial.println(relay.relayMode);
-    //Serial.print("RELAY.sumSwitchingOn = ");       Serial.println(relay.sumSwitchingOn);
-    //Serial.print("RELAY.totalTimeOn = ");       Serial.println(relay.totalTimeOn);
-    tm1 = millis();
-  }
-
+  pirSensor0.update();
+  pirSensor1.update();
   relay.update();
   wifi_init();
   webSocket.loop();
@@ -170,8 +160,8 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED)  timeClient.update();
 
 
-   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
-  if (relay.dataUpdateBit == 1) {
+  //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
+  if (updateDataUpdateBits() == 1) {
     if (mqtt.connected()) {
       sendToMqttServer(serializationToJson_index());
     }
@@ -182,7 +172,7 @@ void loop() {
       int T_broadcastTXT = micros() - startT_broadcastTXT;
       if (T_broadcastTXT > TIMEOUT_T_broadcastTXT)  checkPing();
     }
-    relay.dataUpdateBit = 0;
+    resetDataUpdateBits();
   }
 
   //подсчет времени с момента включения устройства
@@ -197,4 +187,18 @@ void loop() {
     startTimeSaveStat = millis();
   }
 
+}
+
+
+//Проверка флага изменения состояния объектов
+bool updateDataUpdateBits() {
+  return relay.dataUpdateBit | pirSensor0.dataUpdateBit | pirSensor1.dataUpdateBit;
+}
+
+
+//Сброс флагов изменения состояния объектов
+void resetDataUpdateBits() {
+  relay.dataUpdateBit = 0;
+  pirSensor0.dataUpdateBit = 0;
+  pirSensor1.dataUpdateBit = 0;
 }

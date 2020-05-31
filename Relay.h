@@ -3,8 +3,8 @@
 /////////////////////////////////////////////////////////////////////////
 
 //Состояние реле
-#define RELAY_ON  0
-#define RELAY_OFF 1
+#define RELAY_ON  1
+#define RELAY_OFF 0
 
 //Режимы работы реле
 #define MODE_OFF  0     // - реле отключено
@@ -21,6 +21,7 @@ class Relay {
     unsigned int ancillaryDelayOff;        //вспом. переменная для задержка отключения для датчика движения
     PirSensor *pirSensor0Ptr = nullptr;
     PirSensor *pirSensor1Ptr = nullptr;
+    void (*fcnPtrSaveTimeOnRelay)();
 
   private:
     void on();
@@ -34,7 +35,7 @@ class Relay {
     unsigned int totalTimeOn = 0;         //общее время работы реле, мсек
     unsigned int maxContinuousOn = 0;     //максимальная продолжительность непрерывной работы реле, мсек
     unsigned int delayOff = 4000;         //задержка отключения для датчика движения, мсек
-    bool dataUpdateBit = 0;               //флаг обновления данных, устанавливается когда состояние реле изменилось и нужно отправить их клиенту
+    bool dataUpdateBit = 1;               //флаг обновления данных, устанавливается когда состояние реле изменилось и нужно отправить их клиенту
 
     Relay(int setPin, int setMode);
     void setMode(int setMode);
@@ -44,6 +45,7 @@ class Relay {
     void update();
     void serialize(DynamicJsonDocument *doc, int serializeDataType);
     void resetStat();
+    void addFun(void (*funPtr)());
 };
 
 
@@ -63,6 +65,7 @@ void Relay::on() {
     relayState = RELAY_ON;
     ancillaryTotalTimeOn = millis();
     sumSwitchingOn ++;
+    fcnPtrSaveTimeOnRelay();
     dataUpdateBit = 1;
   }
 }
@@ -83,15 +86,6 @@ void Relay::off() {
 
 
 void Relay::update() {
-  if (pirSensor0Ptr != nullptr && pirSensor0Ptr->dataUpdateBit==1) {
-    dataUpdateBit = 1;
-    pirSensor0Ptr->dataUpdateBit = 0;
-  }
-  if (pirSensor1Ptr != nullptr && pirSensor1Ptr->dataUpdateBit==1) {
-    dataUpdateBit = 1;
-    pirSensor1Ptr->dataUpdateBit = 0;
-  }
-
   if (relayMode == MODE_OFF) {
     off();
   } else if (relayMode == MODE_ON) {
@@ -139,18 +133,6 @@ void Relay::detachPirSensor(int number) {
 }
 
 
-bool Relay::readPirSensor(int number) {
-  switch (number) {
-    case 0:
-      if (pirSensor0Ptr != nullptr)   return pirSensor0Ptr->read();
-      else return 0;
-    case 1:
-      if (pirSensor1Ptr != nullptr)   return pirSensor1Ptr->read();
-      else return 0;
-  }
-}
-
-
 void Relay::serialize(DynamicJsonDocument *doc, int serializeDataType) {
   JsonObject obj = doc->createNestedObject("relay");
 
@@ -176,3 +158,7 @@ void Relay::resetStat() {
   dataUpdateBit = 1;
 }
 
+
+void Relay::addFun(void (*funPtr)()) {
+  fcnPtrSaveTimeOnRelay = funPtr;
+}

@@ -366,7 +366,7 @@ let data = {
 
 
 function updateAllPage() {
-	document.getElementById("relayState").classList.toggle('checked', !data["relayState"]);
+	document.getElementById("relayState").classList.toggle('checked', data["relayState"]);
 	document.getElementById("sensor0State").classList.toggle('checked', data["sensor0State"]);
 	document.getElementById("sensor1State").classList.toggle('checked', data["sensor1State"]);
 	document.getElementById("delayOff").value = dataSend["delayOff"]/1000;
