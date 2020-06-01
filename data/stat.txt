@@ -1,1 +1,0 @@
-{"numbOn":182,"timeRelayOn":570.186009e7}
