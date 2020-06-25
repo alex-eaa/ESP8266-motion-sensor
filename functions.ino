@@ -65,19 +65,21 @@ void saveRstInfoToFile() {
 
 
 void saveTimeOnRelay() {
-  String filename = "/inout.txt";
-  //SPIFFS.remove(filename);
-  File file = SPIFFS.open(filename, "a");
-  if (!file) {
-    Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
-  } else {
-    if (pirSensor0.read())   file.print("IN  ");
-    if (pirSensor1.read())   file.print("OUT ");
-    file.print(" - ");
-    file.println(getDataTimeStr());
-    //Serial.print(F("Saved to file "));   Serial.println(filename);
+  if (flagLog == 1) {
+    String filename = "/inout.txt";
+    //SPIFFS.remove(filename);
+    File file = SPIFFS.open(filename, "a");
+    if (!file) {
+      Serial.print(F("Failed to open file for writing"));   Serial.println(filename);
+    } else {
+      if (pirSensor0.read())   file.print("IN  ");
+      if (pirSensor1.read())   file.print("OUT ");
+      file.print(" - ");
+      file.println(getDataTimeStr());
+      //Serial.print(F("Saved to file "));   Serial.println(filename);
+    }
+    file.close();
   }
-  file.close();
 }
 
 

@@ -52,9 +52,8 @@
 	:<input type='text' id='gtw_2' class='staticIP' size='3' maxlength='3' value=''/>
 	:<input type='text' id='gtw_3' class='staticIP' size='3' maxlength='3' value=''/>
 	</p>
-</div>
 
-<div class="content">
+	<hr>
 	<h4><input type='radio' id='wifiAP_mode_on' name='wifiAP_mode' onchange='updateDisabledElements()'/> Режим точки доступа</h4>
 
 	<p>Имя сети: <input type='text' id='p_ssidAP' maxlength='32' value=''/></p>
@@ -62,8 +61,17 @@
 </div>
 
 <div class="content">
-	<h3>Расширенные настройки</h3>
-	<p><input type='checkbox' id='conIndic'>Включить индикатор соединения</p>
+	<h3>Настройки удаленного управления через MQTT</h3>
+	<p><input type='checkbox' id='flagMQTT'>Активировать MQTT</p>
+	<p>Адрес сервера: <input type='text' id='mqtt_server' maxlength='32' value=''/></p>
+	<p>Номер порта: <input type='text' id='mqtt_server_port' maxlength='6' value=''/></p>
+	<p>Логин: <input type='text' id='mqttUser' maxlength='32' value=''/></p>
+	<p>Пароль: <input type='text' id='mqttPass' maxlength='32' value=''/></p>
+</div>
+
+<div class="content">
+	<h3>Логирование включения реле</h3>
+	<p><input type='checkbox' id='flagLog'>Включить лог работы реле</p>
 </div>
 
 <div class="content">
@@ -84,13 +92,23 @@ let data = {
 	p_passwordAP: "",
 	wifiAP_mode: 0,
 	static_IP: false,
-	conIndic: false
+	flagLog: false,
+	flagMQTT: false,
+	mqtt_server: "",
+	mqtt_server_port: "",
+	mqttUser: "",
+	mqttPass: ""
 };
 let dataSend = data;
 
 
 function updateDataForSend() {
-	data["conIndic"] = document.getElementById("conIndic").checked;
+	data["mqttPass"] = document.getElementById("mqttPass").value;
+	data["mqttUser"] = document.getElementById("mqttUser").value;
+	data["mqtt_server_port"] = document.getElementById("mqtt_server_port").value;
+	data["mqtt_server"] = document.getElementById("mqtt_server").value;
+	data["flagMQTT"] = document.getElementById("flagMQTT").checked;
+	data["flagLog"] = document.getElementById("flagLog").checked;
 	data["static_IP"] = document.getElementById("static_IP").checked;
 	data["ip"][0] = (document.getElementById('ip_0').value);
 	data["ip"][1] = (document.getElementById('ip_1').value);
@@ -114,7 +132,12 @@ function updateDataForSend() {
 
 
 function updateAllPage() {
-	document.getElementById('conIndic').checked = data["conIndic"];
+	document.getElementById('mqttPass').value = data["mqttPass"];
+	document.getElementById('mqttUser').value = data["mqttUser"];
+	document.getElementById('mqtt_server_port').value = data["mqtt_server_port"];
+	document.getElementById('mqtt_server').value = data["mqtt_server"];
+	document.getElementById('flagMQTT').checked = data["flagMQTT"];
+	document.getElementById('flagLog').checked = data["flagLog"];
 	document.getElementById('static_IP').checked = data["static_IP"];
 	document.getElementById('ip_0').value = data["ip"][0];
 	document.getElementById('ip_1').value = data["ip"][1]; 

@@ -27,6 +27,12 @@ String serializationToJson_setup()
   for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
   doc["wifiAP_mode"] = wifiAP_mode;
   doc["static_IP"] = static_IP;
+  doc["flagLog"] = flagLog;
+  doc["flagMQTT"] = flagMQTT;
+  doc["mqtt_server"] = mqtt_server;
+  doc["mqtt_server_port"] = mqtt_server_port;
+  doc["mqttUser"] = mqttUser;
+  doc["mqttPass"] = mqttPass;
 
   String output = "";
   serializeJson(doc, output);
@@ -87,6 +93,15 @@ void deserealizationFromJson(const String &json) {
     gtw[3] = doc["gtw"][3];    //Serial.println(gtw[3]);
     wifiAP_mode = doc["wifiAP_mode"];  //Serial.println(wifiAP_mode);
     static_IP = doc["static_IP"];      //Serial.println(static_IP);
+    flagLog = doc["flagLog"];
+    flagMQTT = doc["flagMQTT"];
+    mqtt_server_port = doc["mqtt_server_port"];         //Serial.println(mqtt_server_port);
+    mqttUser = doc["mqttUser"].as<String>();         //Serial.println(user_889afb72);
+    mqttPass = doc["mqttPass"].as<String>();         //Serial.println(pass_7c9ca39a);
+
+    stemp = doc["mqtt_server"].as<String>();
+    mqtt_server = new char [stemp.length() + 1];
+    stemp.toCharArray(mqtt_server, stemp.length() + 1);
 
     saveFile(FILE_NETWORK);
 

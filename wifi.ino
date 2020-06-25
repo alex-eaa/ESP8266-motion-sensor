@@ -22,7 +22,7 @@ void wifi_init()
     Serial.print(F("Connected to AP with password: "));   Serial.println(WiFi.psk());
 #endif
     startMDNS();
-    timeClient.begin();
+    if (flagLog == 1)  timeClient.begin();
     wlConnectedMsgSend = 1;
     digitalWrite(GPIO_LED_WIFI, 0);
   }

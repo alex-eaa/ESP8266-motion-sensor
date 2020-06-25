@@ -65,7 +65,7 @@ void Relay::on() {
     relayState = RELAY_ON;
     ancillaryTotalTimeOn = millis();
     sumSwitchingOn ++;
-    //fcnPtrSaveTimeOnRelay();
+    fcnPtrSaveTimeOnRelay();
     dataUpdateBit = 1;
   }
 }

@@ -19,6 +19,12 @@ bool saveFile(char *filename)
     for (int n = 0; n < 4; n++)  sbntJsonArray.add(sbnt[n]);
     JsonArray gtwJsonArray = doc.createNestedArray("gtw");
     for (int n = 0; n < 4; n++)  gtwJsonArray.add(gtw[n]);
+    doc["flagLog"] = flagLog;
+    doc["flagMQTT"] = flagMQTT;
+    doc["mqtt_server"] = mqtt_server;
+    doc["mqtt_server_port"] = mqtt_server_port;
+    doc["mqttUser"] = mqttUser;
+    doc["mqttPass"] = mqttPass;
   }
   else if (filename == FILE_RELAY) {
     relay.serialize(&doc, SERIALYZE_FOR_FILE);
@@ -103,6 +109,15 @@ bool loadFile(char *filename) {
     gtw[1] = doc["gtw"][1];           //Serial.println(gtw[1]);
     gtw[2] = doc["gtw"][2];           //Serial.println(gtw[2]);
     gtw[3] = doc["gtw"][3];           //Serial.println(gtw[3]);
+    flagLog = doc["flagLog"];         //Serial.println(flagLog);
+    flagMQTT = doc["flagMQTT"];         //Serial.println(flagMQTT);
+    mqtt_server_port = doc["mqtt_server_port"];         //Serial.println(mqtt_server_port);
+    mqttUser = doc["mqttUser"].as<String>();         //Serial.println(user_889afb72);
+    mqttPass = doc["mqttPass"].as<String>();         //Serial.println(pass_7c9ca39a);
+    
+    stemp = doc["mqtt_server"].as<String>();
+    mqtt_server = new char [stemp.length() + 1];
+    stemp.toCharArray(mqtt_server, stemp.length() + 1);
   }
   else if (filename == FILE_RELAY) {
     relay.relayMode = doc["relay"]["relayMode"];
