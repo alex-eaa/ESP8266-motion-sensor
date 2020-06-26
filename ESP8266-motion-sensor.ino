@@ -1,4 +1,7 @@
 /*
+   ВНИМАНИЕ!!! При отсутствии интернет-соединения, из-за невозможности установить соединение
+               с NTP-сервером, связь с контроллером через веб сильно тормозит
+   
       Контроллер управления реле от двух PIR датчиков движения.
 
       Функционал контроллера:
@@ -44,7 +47,7 @@
     - GPIO15 (D8) - красный цвет RGB-светодиода (для платы типа ESP8266 Witty).
 */
 
-//#define DEBUG 1
+#define DEBUG 1
 
 #include <FS.h>
 #include <ESP8266WiFi.h>
@@ -74,7 +77,7 @@
 #define FILE_NETWORK "/net.txt"         //Имя файла для сохранения настроек сети
 
 #define DEVICE_TYPE "esplink_ms_"
-#define TIME_ATTEMP_CON_MQTT 5000       //время между попытками установки соединения с MQTT сервером, мс
+#define TIME_ATTEMP_CON_MQTT 30000      //время между попытками установки соединения с MQTT сервером, мс
 #define TIMEOUT_T_broadcastTXT 100000   //таймаут отправки скоростных сообщений T_broadcastTXT, мкс
 #define TIME_DELTA_timeESPOn 5000       //период прибавки времени к timeESPOn при подсчете timeESPOn
 
@@ -82,7 +85,7 @@
 #define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа запускаемой по кнопке
 
 #define TIME_NTP_OFFSET 10800           //время смещения часового пояса, сек (10800 = +3 часа)
-#define TIME_NTP_UPDATE_INTERVAL 300000 //время синхронизации времени с NTP, мс (300000 = 5 мин)
+#define TIME_NTP_UPDATE_INTERVAL 600000 //время синхронизации времени с NTP, мс (600000 = 10 мин)
 #define NTP_SERVER "pool.ntp.org"       //адрес NTP сервера
 
 #define PERIOD_SAVE_STAT 43200000       //периодичность сохранения статистики, мс
@@ -192,7 +195,7 @@ void loop() {
   server.handleClient();
   MDNS.update();
   if (flagMQTT == 1)   mqttConnect();
-  if (WiFi.status() == WL_CONNECTED && flagLog == 1)  timeClient.update();
+  if (WiFi.status() == WL_CONNECTED && flagLog == 1)   timeClient.update();
 
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены

@@ -1,5 +1,7 @@
 var deviceIp="";
 
+var mqttEnable=0;
+
 var mqttServer="srv1.mqtt.4api.ru";
 var mqttPort=9123;
 var mqttUser="user_889afb72";
@@ -11,7 +13,7 @@ var mqttState = 0;
 var wsState = 0;
 
 
-if (!location.host){
+if (!location.host && mqttEnable==1){
 mqtt = new Paho.MQTT.Client(mqttServer, Number(mqttPort), "");
 mqtt.onConnectionLost = onConnectionLost;
 mqtt.onMessageArrived = onMessageArrived;
@@ -51,6 +53,7 @@ function onMessageArrived(message) {
 	receivedDataProcessing (message.payloadString);
 };
 }
+
 
 
 function wsConnect(wsIP) {
