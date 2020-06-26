@@ -13,7 +13,7 @@ void mqtt_init() {
 void mqttConnect() {
   if (mqtt.connected()) {
     mqtt.loop();
-    //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 5 сек
+    //Переподключение к MQTT серверу, если мы подключены к WIFI и связь с MQTT отсутствует, каждые 30 сек
   } else if (!mqtt.connected() && WiFi.status() == WL_CONNECTED && millis() - startMqttReconnectTime > TIME_ATTEMP_CON_MQTT) {
     reconnect();
     startMqttReconnectTime = millis();
