@@ -44,7 +44,7 @@
     - GPIO15 (D8) - красный цвет RGB-светодиода (для платы типа ESP8266 Witty).
 */
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #include <FS.h>
 #include <ESP8266WiFi.h>
