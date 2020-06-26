@@ -1,7 +1,4 @@
 /*
-   ВНИМАНИЕ!!! При отсутствии интернет-соединения, из-за невозможности установить соединение
-               с NTP-сервером, связь с контроллером через веб сильно тормозит
-   
       Контроллер управления реле от двух PIR датчиков движения.
 
       Функционал контроллера:
@@ -47,7 +44,7 @@
     - GPIO15 (D8) - красный цвет RGB-светодиода (для платы типа ESP8266 Witty).
 */
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #include <FS.h>
 #include <ESP8266WiFi.h>
@@ -84,9 +81,10 @@
 #define DEFAULT_AP_NAME "ESP"           //имя точки доступа запускаемой по кнопке
 #define DEFAULT_AP_PASS "11111111"      //пароль для точки доступа запускаемой по кнопке
 
-#define TIME_NTP_OFFSET 10800           //время смещения часового пояса, сек (10800 = +3 часа)
-#define TIME_NTP_UPDATE_INTERVAL 600000 //время синхронизации времени с NTP, мс (600000 = 10 мин)
-#define NTP_SERVER "pool.ntp.org"       //адрес NTP сервера
+#define TIME_NTP_OFFSET 10800             //время смещения часового пояса, сек (10800 = +3 часа)
+#define TIME_NTP_UPDATE_INTERVAL 3600000  //время синхронизации времени с NTP, мс (3600000 = 60 мин)
+#define NTP_SERVER "pool.ntp.org"         //адрес NTP сервера
+#define INTERVAL_NTP_SYNC_FAILURE 60000 //интервал повтроной синхронизации NTP сервера после неудачи
 
 #define PERIOD_SAVE_STAT 43200000       //периодичность сохранения статистики, мс
 
@@ -117,8 +115,9 @@ unsigned int speedT = 200;  //период отправки данных, мил
 
 //Statistic variables
 double timeESPOn = 0;                   //время с момента включения устройства, мс
-int startTimeESPOn = 0;                 //вспом. для timeESPOn
+unsigned int startTimeESPOn = 0;        //вспом. для timeESPOn
 unsigned int startTimeSaveStat = 0;     //вспом. для timeSaveStat
+unsigned int startTimeNtpSyncFail = 0;  //вспом. переменная для паузы после неудачной синхронизации с NTP сервером
 
 
 WebSocketsServer webSocket(81);
@@ -182,6 +181,7 @@ void setup() {
   startTimeSaveStat = millis();
   startTimeESPOn = millis();
   startMqttReconnectTime = millis();
+  startTimeNtpSyncFail = millis();
 }
 
 
@@ -194,8 +194,13 @@ void loop() {
   webSocket.loop();
   server.handleClient();
   MDNS.update();
+
   if (flagMQTT == 1)   mqttConnect();
-  if (WiFi.status() == WL_CONNECTED && flagLog == 1)   timeClient.update();
+
+  if (WiFi.status() == WL_CONNECTED && flagLog == 1 && millis() - startTimeNtpSyncFail > INTERVAL_NTP_SYNC_FAILURE) {
+    timeClient.update();
+    startTimeNtpSyncFail = millis();
+  }
 
 
   //Отправка Speed данных клиентам при условии что данныее обновились и клиенты подключены
