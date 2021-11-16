@@ -92,8 +92,8 @@
 bool flagMQTT = 0;
 char *mqtt_server = "srv1.mqtt.4api.ru";
 int mqtt_server_port = 9124;
-String mqttUser = "user_889afb72";
-String mqttPass = "pass_7c9ca39a";
+String mqttUser = "user_1202889afb72";
+String mqttPass = "pass_12027c9ca39a";
 String pubTopic;
 unsigned int startMqttReconnectTime = 0;  //вспом. для отсчета времени переподключения к mqtt
 
