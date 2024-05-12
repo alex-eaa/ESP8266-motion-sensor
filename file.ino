@@ -42,8 +42,9 @@ bool saveFile(char *filename)
   file.close();
 
   if (rezSerialization == 0)  Serial.print(F("Failed write to file: "));
-  else   //Serial.print(F("Save file complited: "));
-    return rezSerialization;
+  else Serial.print(F("Save file complited: "));
+  
+  return rezSerialization;
 }
 
 
